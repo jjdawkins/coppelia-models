@@ -4,245 +4,266 @@ import quaternion
 import math
 import time
 from rclpy.node import Node
-
 from std_msgs.msg import String
 from nav_msgs.msg import Path, Odometry
 from geometry_msgs.msg import Twist, Pose
 
+# Define a class for the rover path controller
 
 
 class roverPathControl(Node):
     """
     Class for controlling the path of a rover.
-
-    Attributes:
-        K_psi (float): Proportional gain for yaw angle control.
-        K_ct (float): Proportional gain for lateral error control.
-        K_spd (float): Proportional gain for speed control.
-        cruise_spd (float): Desired cruising speed.
-        max_speed (float): Maximum speed of the rover.
-        max_steer (float): Maximum steering angle of the rover.
-        x (float): Current x-coordinate of the rover.
-        y (float): Current y-coordinate of the rover.
-        psi (float): Current yaw angle of the rover.
-        r (float): Current yaw rate of the rover.
-        u (float): Current x-velocity of the rover.
-        v (float): Current y-velocity of the rover.
-        mission (bool): Flag indicating if a mission is in progress.
-        path_sub (Subscription): Subscription to the path topic.
-        odom_sub (Subscription): Subscription to the odometry topic.
-        target_pub (Publisher): Publisher for the target pose topic.
-        cmd_pub (Publisher): Publisher for the command velocity topic.
-        dt (float): Time step for the control loop.
-        timer (Timer): Timer for the control loop.
     """
 
     def __init__(self):
         """
-        Initializes the roverPathControl object.
+        Initialize the roverPathControl class.
         """
-        super().__init__('path_controller')
+        super().__init__("path_controller")
+
         # Controller gains
-        self.K_psi = 1.0  # Proportional gain for yaw angle control
-        self.K_ct = 1.0  # Proportional gain for lateral error control
-        self.K_spd = 0.2  # Proportional gain for speed control
+        self.K_psi = 1.0
+        self.K_ct = 1.0
+        self.K_spd = 0.2
 
         # Rover parameters
-        self.cruise_spd = 1.0  # Desired cruising speed
-        self.max_speed = 3.5  # Maximum speed of the rover
-        self.max_steer = 0.35  # Maximum steering angle of the rover
+        self.cruise_spd = 1.0
+        self.max_speed = 3.5
+        self.max_steer = 0.35
 
         # Rover state variables
-        self.x = 0.0  # Current x-coordinate of the rover
-        self.y = 0.0  # Current y-coordinate of the rover
-        self.psi = 0.0  # Current yaw angle of the rover
-        self.r = 0.0  # Current yaw rate of the rover
-        self.u = 0.0  # Current x-velocity of the rover
-        self.v = 0.0  # Current y-velocity of the rover
-        self.mission = False  # Flag indicating if a mission is in progress
+        self.x = 0.0
+        self.y = 0.0
+        self.psi = 0.0
+        self.r = 0.0
+        self.u = 0.0
+        self.v = 0.0
+        self.mission = False
 
-        # Subscriptions
-        self.path_sub = self.create_subscription(Path, '/path', self.path_callback, 10)  # Subscription to the path topic
-        self.odom_sub = self.create_subscription(Odometry, '/rover/mocap/odom', self.odom_callback, 10)  # Subscription to the odometry topic
-
-        # Publishers
-        self.target_pub = self.create_publisher(Pose, '/target_pose', 10)  # Publisher for the target pose topic
-        self.cmd_pub = self.create_publisher(Twist, '/rover/cmd_vel', 10)  # Publisher for the command velocity topic
+        # Create subscribers and publishers
+        self.path_sub = self.create_subscription(
+            Path, "/path", self.path_callback, 10)
+        self.odom_sub = self.create_subscription(
+            Odometry, "/rover/mocap/odom", self.odom_callback, 10
+        )
+        self.target_pub = self.create_publisher(Pose, "/target_pose", 10)
+        self.cmd_pub = self.create_publisher(Twist, "/rover/cmd_vel", 10)
 
         # Control loop parameters
-        self.dt = 0.05  # Time step for the control loop
-        self.timer = self.create_timer(self.dt, self.control_loop)  # Timer for the control loop
+        self.dt = 0.05  # seconds
+        self.timer = self.create_timer(self.dt, self.control_loop)
 
     def wrapToPi(self, ang):
         """
-        Wraps an angle to the range [-pi, pi].
+        Helper function to wrap an angle to the range [-pi, pi].
 
         Args:
-            ang (float): Angle to be wrapped.
+            ang (float): The angle to be wrapped.
 
         Returns:
-            float: Wrapped angle.
+            float: The wrapped angle.
         """
-        ang = ang % (2*math.pi)
+        while ang > math.pi:
+            ang = ang - 2 * math.pi
+
+        while ang < -math.pi:
+            ang = ang + 2 * math.pi
 
         return ang
 
     def findClosestPoint(self, path_pose, pose):
         """
-        Finds the index of the closest point on the path to the given pose.
+        Helper function to find the index of the closest point on the path.
 
         Args:
             path_pose (numpy.ndarray): Array of path poses.
-            pose (float): Current pose.
+            pose (numpy.ndarray): Current pose.
 
         Returns:
-            int: Index of the closest point.
+            int: Index of the closest point on the path.
         """
         diff = path_pose - pose
-        rng = np.sqrt(diff[:,0]*diff[:,0]+diff[:,1]*diff[:,1])
+        rng = np.sqrt(diff[:, 0] * diff[:, 0] + diff[:, 1] * diff[:, 1])
         index = np.argmin(rng)
         return index
 
     def findPathLocation(self, path_s, car_s):
         """
-        Finds the index of the path location closest to the given car location.
+        Helper function to find the index of the path location closest to the rover.
 
         Args:
             path_s (numpy.ndarray): Array of path locations.
-            car_s (float): Current car location.
+            car_s (float): Current rover location.
 
         Returns:
-            int: Index of the path location.
+            int: Index of the path location closest to the rover.
         """
         diff = path_s - car_s
         index = np.argmin(np.abs(diff))
         return index
 
-    def saturate(self, val, min_val, max_val):
+    def saturate(self, val, min, max):
         """
-        Saturates a value between a minimum and maximum value.
+        Helper function to saturate a value between a minimum and maximum.
 
         Args:
-            val (float): Value to be saturated.
-            min_val (float): Minimum value.
-            max_val (float): Maximum value.
+            val (float): The value to be saturated.
+            min (float): The minimum value.
+            max (float): The maximum value.
 
         Returns:
-            float: Saturated value.
+            float: The saturated value.
         """
-        if val > max_val:
-            val = max_val
-        if val < min_val:
-            val = min_val
+        if val > max:
+            val = max
+        if val < min:
+            val = min
 
         return val
 
     def path_callback(self, msg):
         """
-        Callback function for the path topic.
+        Callback function for the path subscriber.
 
         Args:
-            msg: Path message.
+            msg: The received path message.
         """
-        print('Path Received')  # Print a message indicating that the path has been received
-        self.wp_n = len(msg.poses)  # Get the number of waypoints in the path
-        self.path = np.zeros([self.wp_n,3])  # Initialize an array to store the path coordinates and yaw angles
-        self.path_s = np.zeros([self.wp_n])  # Initialize an array to store the path locations
-        self.s = 0  # Initialize the current path location
+        print("Path Received")
+        self.wp_n = len(msg.poses)
+        self.path = np.zeros([self.wp_n, 3])
+        self.path_s = np.zeros([self.wp_n])
+        self.s = 0
 
         for i in range(self.wp_n):
             # Extract quaternion from pose message
             orientation_q = msg.poses[i].pose.orientation
-            quat = np.quaternion(msg.poses[i].pose.orientation.w, msg.poses[i].pose.orientation.x,
-                                 msg.poses[i].pose.orientation.y, msg.poses[i].pose.orientation.z)
+            quat = np.quaternion(
+                msg.poses[i].pose.orientation.w,
+                msg.poses[i].pose.orientation.x,
+                msg.poses[i].pose.orientation.y,
+                msg.poses[i].pose.orientation.z,
+            )
             R = quaternion.as_rotation_matrix(quat)
-            eul = np.array([math.atan2(R[2][1], R[2][2]), -math.asin(R[2][0]), math.atan2(R[1][0], R[0][0])])
+            eul = np.array(
+                [
+                    math.atan2(R[2][1], R[2][2]),
+                    -math.asin(R[2][0]),
+                    math.atan2(R[1][0], R[0][0]),
+                ]
+            )
 
-            self.path[i,0] = msg.poses[i].pose.position.x  # Store the x-coordinate of the waypoint
-            self.path[i,1] = msg.poses[i].pose.position.y  # Store the y-coordinate of the waypoint
-            self.path[i,2] = eul[2]  # Store the yaw angle of the waypoint
+            # Store path position and orientation
+            self.path[i, 0] = msg.poses[i].pose.position.x
+            self.path[i, 1] = msg.poses[i].pose.position.y
+            self.path[i, 2] = eul[2]
 
-        dx = np.diff(self.path[:,0])  # Calculate the differences in x-coordinates between waypoints
-        dy = np.diff(self.path[:,1])  # Calculate the differences in y-coordinates between waypoints
-        r = np.sqrt(dx*dx + dy*dy)  # Calculate the distances between waypoints
+        dx = np.diff(self.path[:, 0])
+        dy = np.diff(self.path[:, 1])
+        r = np.sqrt(dx * dx + dy * dy)
 
-        self.path_s[1:len(self.path)] = np.cumsum(r)  # Calculate the cumulative sum of the distances to get the path locations
-        self.path_l = self.path_s[np.size(r)-1]  # Get the total length of the path
-        self.mission = True  # Set the mission flag to indicate that a mission is in progress
+        self.path_s[1: len(self.path)] = np.cumsum(r)
+        self.path_l = self.path_s[np.size(r) - 1]
+        self.mission = True
+
+        # print size of received path
+        print("Path Size: ", self.wp_n)
 
     def odom_callback(self, msg):
         """
-        Callback function for the odometry topic.
+        Callback function for the odometry subscriber.
 
         Args:
-            msg: Odometry message.
+            msg: The received odometry message.
         """
-        self.x = msg.pose.pose.position.x  # Update the current x-coordinate of the rover
-        self.y = msg.pose.pose.position.y  # Update the current y-coordinate of the rover
-        quat = np.quaternion(msg.pose.pose.orientation.w, msg.pose.pose.orientation.x,
-                             msg.pose.pose.orientation.y, msg.pose.pose.orientation.z)
+        self.x = msg.pose.pose.position.x
+        self.y = msg.pose.pose.position.y
+        quat = np.quaternion(
+            msg.pose.pose.orientation.w,
+            msg.pose.pose.orientation.x,
+            msg.pose.pose.orientation.y,
+            msg.pose.pose.orientation.z,
+        )
         R = quaternion.as_rotation_matrix(quat)
-        eul = np.array([math.atan2(R[2][1], R[2][2]), -math.asin(R[2][0]), math.atan2(R[1][0], R[0][0])])
-        self.psi = eul[2]  # Update the current yaw angle of the rover
-        self.u = msg.twist.twist.linear.x  # Update the current x-velocity of the rover
-        self.v = msg.twist.twist.linear.y  # Update the current y-velocity of the rover
-        self.r = msg.twist.twist.angular.z  # Update the current yaw rate of the rover
+        eul = np.array(
+            [
+                math.atan2(R[2][1], R[2][2]),
+                -math.asin(R[2][0]),
+                math.atan2(R[1][0], R[0][0]),
+            ]
+        )
+        self.psi = eul[2]
+        self.u = msg.twist.twist.linear.x
+        self.v = msg.twist.twist.linear.y
+        self.r = msg.twist.twist.angular.z
 
     def control_loop(self):
         """
-        Control loop for the rover path controller.
+        Control loop function.
         """
         if self.mission:
-            if self.s > self.path_l:
-                self.s = 0  # Reset the current path location if it exceeds the total length of the path
-                self.cruise_spd += 0.5  # Increase the cruising speed by 0.5
+            if (
+                self.s > self.path_l
+            ):  # If we reach the end of the path start back at zero
+                self.s = 0
+                self.cruise_spd += 0.5
                 if self.cruise_spd > self.max_speed:
-                    self.cruise_spd = 1.0  # Reset the cruising speed to 1.0 if it exceeds the maximum speed
+                    self.cruise_spd = 1.0
             else:
-                self.desSpeed = self.cruise_spd  # Set the desired speed to the cruising speed
+                self.desSpeed = self.cruise_spd
 
-            self.s = self.s + self.cruise_spd*self.dt  # Update the current path location based on the cruising speed
+            self.s = self.s + self.cruise_spd * self.dt
 
-            self.xdes = np.interp(self.s, self.path_s, self.path[:,0])  # Interpolate the desired x-coordinate based on the current path location
-            self.ydes = np.interp(self.s, self.path_s, self.path[:,1])  # Interpolate the desired y-coordinate based on the current path location
-            self.psi_path = np.interp(self.s, self.path_s, self.path[:,2])  # Interpolate the desired yaw angle based on the current path location
+            self.xdes = np.interp(self.s, self.path_s, self.path[:, 0])
+            self.ydes = np.interp(self.s, self.path_s, self.path[:, 1])
+            self.psi_path = np.interp(self.s, self.path_s, self.path[:, 2])
 
-            ind = self.findPathLocation(self.path_s, self.s)  # Find the index of the path location closest to the current path location
+            ind = self.findPathLocation(self.path_s, self.s)
 
-            self.xerr = self.xdes - self.x  # Calculate the x-error between the desired and current x-coordinates
-            self.yerr = self.ydes - self.y  # Calculate the y-error between the desired and current y-coordinates
+            self.xerr = self.xdes - self.x
+            self.yerr = self.ydes - self.y
 
             tgt_pose_msg = Pose()
-            tgt_pose_msg.position.x = self.xdes  # Set the desired x-coordinate in the target pose message
-            tgt_pose_msg.position.y = self.ydes  # Set the desired y-coordinate in the target pose message
-            self.target_pub.publish(tgt_pose_msg)  # Publish the target pose message
+            tgt_pose_msg.position.x = self.xdes
+            tgt_pose_msg.position.y = self.ydes
+            self.target_pub.publish(tgt_pose_msg)
 
-            self.psi_des = math.atan2(self.yerr, self.xerr)  # Calculate the desired yaw angle based on the x and y errors
+            self.psi_des = math.atan2(self.yerr, self.xerr)
 
-            self.xerr_b = math.cos(self.psi) * self.xerr + math.sin(self.psi) * self.yerr  # Transform the x-error to the body frame
-            self.yerr_b = -math.sin(self.psi) * self.xerr + math.cos(self.psi) * self.yerr  # Transform the y-error to the body frame
+            self.xerr_b = (
+                math.cos(self.psi) * self.xerr + math.sin(self.psi) * self.yerr
+            )
+            self.yerr_b = (
+                -math.sin(self.psi) * self.xerr +
+                math.cos(self.psi) * self.yerr
+            )
 
-            self.psi_err = self.wrapToPi(self.psi_path - self.psi)  # Calculate the yaw angle error
+            self.psi_err = self.wrapToPi(self.psi_path - self.psi)
 
             str_ang = 0.0
-            if abs(self.u) < 0.1:
-                str_ang = self.psi_err  # Set the steering angle to the yaw angle error if the x-velocity is small
-            else:
-                str_ang = self.K_psi * self.psi_err + math.atan(self.K_ct * self.yerr_b / self.u)  # Calculate the steering angle based on the yaw angle error and lateral error
+            if (
+                abs(self.u) < 0.1
+            ):  # if speed less than 10 cm/s, use speed invariant turn angle
+                str_ang = self.psi_err
+            else:  # if speed greater than 10 cm/s, use speed dependent steering angle
+                str_ang = self.K_psi * self.psi_err + math.atan(
+                    self.K_ct * self.yerr_b / self.u
+                )
 
-            str_ang = self.saturate(str_ang, -self.max_steer, self.max_steer)  # Saturate the steering angle within the maximum steering angle limits
-            spd_cmd = self.cruise_spd + self.K_spd * self.xerr_b  # Calculate the speed command based on the cruising speed and x-error in the body frame
+            str_ang = self.saturate(str_ang, -self.max_steer, self.max_steer)
+            spd_cmd = self.cruise_spd + self.K_spd * self.xerr_b
 
-            spd_cmd = self.saturate(spd_cmd, -self.max_speed, self.max_speed)  # Saturate the speed command within the maximum speed limits
+            spd_cmd = self.saturate(spd_cmd, -self.max_speed, self.max_speed)
 
             cmd_vel_msg = Twist()
-            cmd_vel_msg.linear.x = spd_cmd  # Set the linear velocity in the command velocity message
-            cmd_vel_msg.angular.z = str_ang  # Set the angular velocity in the command velocity message
+            cmd_vel_msg.linear.x = spd_cmd
+            cmd_vel_msg.angular.z = str_ang
 
-            self.cmd_pub.publish(cmd_vel_msg)  # Publish the command velocity message
+            self.cmd_pub.publish(cmd_vel_msg)
         else:
-            print("Waiting for Mission")  # Print a message indicating that the rover is waiting for a mission
-            time.sleep(1)  # Sleep for 1 second
+            print("Waiting for Mission")
+            time.sleep(1)
+
 
 def main(args=None):
     rclpy.init(args=args)
@@ -258,5 +279,5 @@ def main(args=None):
     rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
