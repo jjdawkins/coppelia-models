@@ -17,8 +17,11 @@ class nsaidEstimation(Node):
     def __init__(self):
         super().__init__('nsaid_estimation')
         print("nsaid_estimation node started")
+
         # create time variables
-        self.t_init = self.get_clock().now().nanoseconds * 1e-9
+        sec, nsec = self.get_clock().now().seconds_nanoseconds()
+        self.t_init = sec + nsec * 1e-9
+        self.t = self.t_init
 
         # publish to cmd vel topic
         self.vel_topic = '/rover/cmd_vel'
@@ -30,12 +33,24 @@ class nsaidEstimation(Node):
 
     def send_cmd_vel(self, u, w):
         twist = Twist()
-        twist.linear.x = 2.0
+        twist.linear.x = u
         twist.angular.z = w
         self.vel_pub.publish(twist)
 
+    def update_t(self):
+        sec, nsec = self.get_clock().now().seconds_nanoseconds()
+        self.t = sec + nsec * 1e-9
+
     def run_loop(self):
-        self.send_cmd_vel(1.0, 0.1)
+        self.update_t()
+        # create input
+        omega = 1.5 + 0.5 * math.sin(self.t)
+        if math.sin(0.2 * self.t) > 0:
+            delta = 0.2
+        else:
+            delta = -0.2  # must be a float
+        # publish the command message
+        self.send_cmd_vel(omega, delta)
 
 
 ### DONE WITH CLASS DEFINITION ###
