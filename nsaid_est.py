@@ -32,10 +32,8 @@ class nsaidEstimation(Node):
         # subscribe to the odometry topic
         self.odom_sub = self.create_subscription(
             Odometry, '/rover/mocap/odom', self.odom_callback, 10)
-        self.x_dot = 0.0
-        self.psi_dot = 0.0
-        self.y_dot = 0.0
-        self.z_dot = np.array([self.x_dot, self.psi_dot, self.psi_dot])
+        self.z_dot = np.zeros(3)
+        self.t_odom = -5
 
         # create timer that sends velocity commands
         self.dt = 0.01
@@ -43,7 +41,7 @@ class nsaidEstimation(Node):
 
         # create the reference functions (use subs to evaluate)
         t = symbols('t')
-        ref_v = Array([1.5 + 0.5*sin(t), 0.3 * sin(0.11*t), 0])
+        ref_v = Array([2.5 + 0.5*sin(0.5 * t), 0.3 * sin(0.1*t), 0])
         self.ref_v = lambdify(t, ref_v, 'numpy')
         self.ref_v_dot = lambdify(t, diff(ref_v, t), 'numpy')
 
@@ -51,24 +49,17 @@ class nsaidEstimation(Node):
         self.update_z_d()
 
         # define the parameters
-        self.l = 0.17
-        self.m = 4.378
-        self.Jz = 0.0715
-        self.kt = 0.1
-        self.crr = 0.1
-        self.caf = 10
-        self.cs = 20
-        self.cd = -10
+        self.l = 0.170
+        self.theta_0 = np.array([4.378, 0.0715, 0.1, 0.1, 10, 20, -10])
 
         # make column vector of parameters
-        self.theta_h = np.array(
-            [self.m, self.Jz, self.kt, self.crr, self.caf, self.cs, self.cd])
+        self.theta_h = np.copy(self.theta_0)
 
         # make our controller gains
         self.k1 = 1
         self.k2 = 1
         # make our adaptive gains
-        self.gamma = np.diag([0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1])
+        self.gamma = 1 * np.diag([1e-3, 1e-3, 1e-1, 1e-1, 1, 1, 1])
 
         # start moving!
         self.send_cmd_vel(2.0, 0.0)
@@ -93,7 +84,7 @@ class nsaidEstimation(Node):
 
     def update_t(self):
         sec, nsec = self.get_clock().now().seconds_nanoseconds()
-        now = sec + nsec * 1e-9 - self.t_init
+        now = (sec + nsec * 1e-9) - self.t_init
 
         # update the time step
         self.dt = now - self.t
@@ -101,12 +92,15 @@ class nsaidEstimation(Node):
 
     def odom_callback(self, msg):
         # get the velocities from the subscriber
-        self.x_dot = msg.twist.twist.linear.x
-        self.y_dot = msg.twist.twist.linear.y
-        self.psi_dot = msg.twist.twist.angular.z
+        x_dot = msg.twist.twist.linear.x
+        psi_dot = msg.twist.twist.angular.z
+        y_dot = msg.twist.twist.linear.y
 
         # update the z_dot vector
-        self.z_dot = np.array([self.x_dot, self.psi_dot, self.psi_dot])
+        self.z_dot = np.array([x_dot, psi_dot, y_dot])
+
+        # update the time
+        self. t_odom = self.t
 
     def update_z_d(self):
         # update the reference velocity and acceleration values
@@ -176,17 +170,29 @@ class nsaidEstimation(Node):
         self.C = C
 
     def run_loop(self):
+        # update the time
+        self.update_t()
+
+        # make sure that messages are being received
+        if self.t - self.t_odom > 0.2:
+            print("No messages received!")
+            self.send_cmd_vel(2.0, 0.0)
+            return
+
         # make sure speed is not zero
         if self.z_dot[0] < 0.5:
             print("Speed too low!")
             self.send_cmd_vel(2.0, 0.0)
             return
 
-        # update the time
-        self.update_t()
         print(f"t: {self.t:.2f}")
         # get delta_z_dot (this is a 1x3)
-        delta_z_dot = self.z_dot_d - self.z_dot_d
+        delta_z_dot = self.z_dot - self.z_dot_d
+
+        # print each delta_z_dot value with constant width
+        for i in range(3):
+            print(f"{delta_z_dot[i]:.4f}", end=" ")
+        print()
 
         # Evaluate W_z (this is a 2x7 matrix)
         self.eval_W_z()
@@ -197,9 +203,12 @@ class nsaidEstimation(Node):
         delta_theta_h = -self.gamma @ W_z_T @ delta_z_dot2
         # force a 1x7 shape
         delta_theta_h = np.reshape(delta_theta_h, 7)
-        print(delta_theta_h)
 
-        # apply the parameter update
+        # print each theata_h value with constant width
+        for i in range(7):
+            print(f"{self.theta_h[i]:.4f}", end=" ")
+
+        # apply the parameter updated
         self.theta_h = self.theta_h + delta_theta_h * self.dt
 
         # get new reference velocity values
