@@ -167,7 +167,6 @@ class roverPathControl(Node):
         self.mission = True
 
         # print size of received path
-        print("Path Size: ", self.wp_n)
 
     def odom_callback(self, msg):
         """
