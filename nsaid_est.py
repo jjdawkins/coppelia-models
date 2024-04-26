@@ -150,10 +150,8 @@ class nsaidEstimation(Node):
         y_dot = self.z_dot[2]
         x_dot_d = self.z_dot_d[0]
         psi_dot_d = self.z_dot_d[1]
-        y_dot_d = self.z_dot_d[2]
         x_ddot_d = self.z_ddot_d[0]
         psi_ddot_d = self.z_ddot_d[1]
-        y_ddot_d = self.z_ddot_d[2]
         m = self.theta_h[0]
         j_z = self.theta_h[1]
         k = self.theta_h[2]
@@ -207,11 +205,11 @@ class nsaidEstimation(Node):
         # apply the parameter updated
         self.theta_h = self.theta_h + delta_theta_h * self.dt
 
-        # get new reference velocity values
-        self.update_z_d()
-
         # update the control inputs
         self.eval_control()
+
+        # get new reference velocity values
+        self.update_z_d()
 
         # send the control inputs
         self.send_cmd_vel(self.C[0], self.C[1])
