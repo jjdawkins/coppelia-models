@@ -18,7 +18,7 @@ class roverPathControl(Node):
 
         self.K_psi = 1.0
         self.K_ct = 1.0
-        self.K_spd = 0.2
+        self.K_spd = 0.4
         self.cruise_spd = 1.0
         self.max_speed = 3.5
         self.max_steer = 0.35
@@ -79,7 +79,7 @@ class roverPathControl(Node):
         #print(self.wp_n)
         for i in range(self.wp_n):
             
-            print(msg.poses[i].pose.position.x,msg.poses[i].pose.position.y)
+            # print(msg.poses[i].pose.position.x,msg.poses[i].pose.position.y)
             orientation_q = msg.poses[i].pose.orientation # extract quaternion from pose message
             quat = np.quaternion(msg.poses[i].pose.orientation.w,msg.poses[i].pose.orientation.x,msg.poses[i].pose.orientation.y,msg.poses[i].pose.orientation.z)
             R = quaternion.as_rotation_matrix(quat)
@@ -87,16 +87,21 @@ class roverPathControl(Node):
 
             self.path[i,0] = msg.poses[i].pose.position.x
             self.path[i,1] = msg.poses[i].pose.position.y
-            self.path[i,2] = eul[2]
+            # self.path[i,2] = eul[2]
 
-        dx = np.diff(self.path[:,0])
-        dy = np.diff(self.path[:,1])
+        dx = np.roll(self.path[:,0],-1)-self.path[:,0]
+        dy = np.roll(self.path[:,1],-1)-self.path[:,1]
+        dpsi = np.arctan2(dy,dx)
+
+        self.path[:,2] = dpsi
+        #dx = np.diff(self.path[:,0])
+        #dy = np.diff(self.path[:,1])
         r = np.sqrt(dx*dx + dy*dy)
 
-        # print(self.path[:,0])
+        print(self.path)
         # print(len(np.cumsum(r)))
 
-        self.path_s[1:len(self.path)] = np.cumsum(r)
+        self.path_s[0:len(self.path)] = np.cumsum(r)
         self.path_l = self.path_s[np.size(r)-1]
         # print(self.path_l)
         self.mission = True
@@ -170,7 +175,7 @@ class roverPathControl(Node):
             if abs(self.u)<0.1: # if speed less than 10 cm/s, use speed invariant turn angle
                 str_ang = self.psi_err 
             else: # if speed greater than 10 cm/s, use speed dependent steering angle
-                str_ang = self.K_psi*self.psi_err  + math.atan(self.K_ct*self.yerr_b/self.u)
+                str_ang = self.K_psi*self.psi_err/self.u + self.K_ct*math.atan(self.yerr_b/self.u)
 
             str_ang = self.saturate(str_ang,-self.max_steer,self.max_steer)
             spd_cmd = self.cruise_spd + self.K_spd*self.xerr_b
