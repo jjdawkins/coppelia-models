@@ -13,15 +13,14 @@ from geometry_msgs.msg import Twist, Pose, Vector3
 from sensor_msgs.msg import Imu
 
 
-
 class parameterEstimation(Node):
 
     def __init__(self):
         super().__init__('param_estimation')
 
         # Define Known Parameters
-        self.a = 0.167 # from CoppeliaSim
-        self.b = 0.170 # from CoppeliaSim
+        self.a = 0.167  # from CoppeliaSim
+        self.b = 0.170  # from CoppeliaSim
         self.mu_f = 0.5
         self.mu_r = 0.4
         self.m = 4.378
@@ -58,8 +57,8 @@ class parameterEstimation(Node):
         self.r_dot_est = 0.0
 
         # Define time Variables
-        (sec,nsec) = self.get_clock().now().seconds_nanoseconds()
-        self.t_init = float(sec) + float(nsec*1e-9) 
+        (sec, nsec) = self.get_clock().now().seconds_nanoseconds()
+        self.t_init = float(sec) + float(nsec*1e-9)
         self.t_imu = 0.0
         self.t_imu_old = 0.0
         self.dt_imu = 0.05
@@ -72,85 +71,106 @@ class parameterEstimation(Node):
         self.tau = 1
         self.w_sig = 0.0003
         Q_sig = 0.1
-                
-        self.P = np.diag([1,1,1,1])
-        self.R = np.diag([accel_std**2,accel_std**2,rdot_std**2])    
-        self.I = np.diag([1,1,1,1])
-        self.H = np.zeros([3,4])
-        self.x_hat = np.zeros([4,1])          
-        
+
+        self.P = np.diag([1, 1, 1, 1])
+        self.R = np.diag([accel_std**2, accel_std**2, rdot_std**2])
+        self.I = np.diag([1, 1, 1, 1])
+        self.H = np.zeros([3, 4])
+        self.x_hat = np.zeros([4, 1])
 
         self.plot_flag = False
         plt.ion()
-        self.fig_imu,self.axs = plt.subplots(4,1)
-        
+        self.fig_imu, self.axs = plt.subplots(4, 1)
+
         self.axs[0].set_ylabel('C_rr (m/s^2)')
         self.axs[1].set_ylabel('K_mot (m/s^2)')
-        self.axs[2].set_ylabel('C_af (rad/s)')   
-        self.axs[3].set_ylabel('C_af (rad/s)')            
+        self.axs[2].set_ylabel('C_af (rad/s)')
+        self.axs[3].set_ylabel('C_ar (rad/s)')
 
-        for i in range(len(self.axs)):  
-            self.axs[i].plot(0,0)
+        for i in range(len(self.axs)):
+            self.axs[i].plot(0, 0)
             self.axs[i].set_xlabel('time (s)')
 
-        self.odom_sub = self.create_subscription(Odometry,'/rover/mocap/odom',self.odom_callback,10)
-        self.imu_sub = self.create_subscription(Imu,'/rover/imu',self.imu_callback,10)
-        self.cmd_sub = self.create_subscription(Twist, '/rover/cmd_vel', self.cmd_vel_callback,10)
-        self.f1_sub = self.create_subscription(Vector3,'/rover/forces_front',self.front_force_callback,10)
-        self.f2_sub = self.create_subscription(Vector3,'/rover/forces_rear',self.rear_force_callback,10)
+        self.odom_sub = self.create_subscription(
+            Odometry, '/rover/mocap/odom', self.odom_callback, 10)
+        self.imu_sub = self.create_subscription(
+            Imu, '/rover/imu', self.imu_callback, 10)
+        self.cmd_sub = self.create_subscription(
+            Twist, '/rover/cmd_vel', self.cmd_vel_callback, 10)
+        self.f1_sub = self.create_subscription(
+            Vector3, '/rover/forces_front', self.front_force_callback, 10)
+        self.f2_sub = self.create_subscription(
+            Vector3, '/rover/forces_rear', self.rear_force_callback, 10)
 
-
-        self.target_pub = self.create_publisher(Pose,'/target_pose',10)
-        self.dt = 0.05  # seconds     
+        self.target_pub = self.create_publisher(Pose, '/target_pose', 10)
+        self.dt = 0.05  # seconds
 
         self.timer = self.create_timer(self.dt, self.run_loop)
-    
 
-    def front_force_callback(self,msg):
+    def front_force_callback(self, msg):
+        # Callback function for receiving front force measurements
+        # Update the front force variables
         self.f1_x = msg.x
         self.f1_y = msg.y
 
-    def rear_force_callback(self,msg):
+    def rear_force_callback(self, msg):
+        # Callback function for receiving rear force measurements
+        # Update the rear force variables
         self.f2_x = msg.x
         self.f2_y = msg.y
 
-    def cmd_vel_callback(self,msg):
+    def cmd_vel_callback(self, msg):
+        # Callback function for receiving command velocity
+        # Update the delta and V_cmd variables
         self.delta = msg.angular.z
         self.V_cmd = msg.linear.x
 
-    def imu_callback(self,msg):
-        
-        (sec,nsec) = self.get_clock().now().seconds_nanoseconds()
-        
-        self.t_imu = float(sec) + float(nsec*1e-9)-self.t_init        
+    def imu_callback(self, msg):
+        # Callback function for receiving IMU data
+
+        # Get current time
+        (sec, nsec) = self.get_clock().now().seconds_nanoseconds()
+
+        # Calculate current time in seconds
+        self.t_imu = float(sec) + float(nsec*1e-9)-self.t_init
+
+        # Calculate time difference between current and previous IMU callback
         self.dt_imu = self.t_imu - self.t_imu_old
+
+        # Update IMU measurements
         self.ax_meas = msg.linear_acceleration.x
         self.ay_meas = msg.linear_acceleration.y
         self.r_meas = msg.angular_velocity.z
-        # self.imu_data[:,self.imu_ind] = np.array([self.ax_meas,self.ay_meas,self.r_meas])
-        self.imu_ind +=1
 
+        # Calculate angular velocity rate of change
         self.r_dot_est = (self.r_meas - self.r_meas_old)/self.dt_imu
+
+        # Set plot flag to True
         self.plot_flag = True
+
+        # Update previous IMU time and measurement
         self.t_imu_old = self.t_imu
         self.r_meas_old = self.r_meas
 
-
-    def odom_callback(self,msg):
+    def odom_callback(self, msg):
 
         self.x = msg.pose.pose.position.x
         self.y = msg.pose.pose.position.y
-        quat = np.quaternion(msg.pose.pose.orientation.w,msg.pose.pose.orientation.x,msg.pose.pose.orientation.y,msg.pose.pose.orientation.z)
+        quat = np.quaternion(msg.pose.pose.orientation.w, msg.pose.pose.orientation.x,
+                             msg.pose.pose.orientation.y, msg.pose.pose.orientation.z)
         R = quaternion.as_rotation_matrix(quat)
-        eul = np.array([math.atan2(R[2][1],R[2][2]),-math.asin(R[2][0]),math.atan2(R[1][0],R[0][0])])            
+        eul = np.array([math.atan2(R[2][1], R[2][2]), -
+                       math.asin(R[2][0]), math.atan2(R[1][0], R[0][0])])
         self.psi = eul[2]
+        # get the velocities, u v and r
         self.u = msg.twist.twist.linear.x
         self.v = msg.twist.twist.linear.y
         self.r = msg.twist.twist.angular.z
 
-        if(math.fabs(self.u)>0.1):
+        if (math.fabs(self.u) > 0.1):
             self.beta = math.atan(self.v/self.u)
-            self.alpha_f = math.atan((self.v + self.a*self.r)/self.u) - self.delta
+            self.alpha_f = math.atan(
+                (self.v + self.a*self.r)/self.u) - self.delta
             self.alpha_r = math.atan((self.v + self.b*self.r)/self.u)
 
         else:
@@ -160,84 +180,85 @@ class parameterEstimation(Node):
 
     def update_plots(self):
         t_win = 20
-        if(self.plot_flag):
-            
-            if(self.t_imu < t_win):
+        if (self.plot_flag):
+
+            if (self.t_imu < t_win):
                 t_min = 0.0
             else:
                 t_min = self.t_imu - t_win
 
+            # update plot for C_rr
             lin, = self.axs[0].get_lines()
-            lin.set_xdata(np.append(lin.get_xdata(),self.t_imu))
-            lin.set_ydata(np.append(lin.get_ydata(),self.x_hat[0]))
+            lin.set_xdata(np.append(lin.get_xdata(), self.t_imu))
+            lin.set_ydata(np.append(lin.get_ydata(), self.x_hat[0]))
             ymax = 1.2*np.max(lin.get_ydata())
             ymin = 1.2*np.min(lin.get_ydata())
 
-            self.axs[0].set_xlim(left=t_min,right=self.t_imu)
-            self.axs[0].set_ylim(top=ymax,bottom=ymin)
-            
+            self.axs[0].set_xlim(left=t_min, right=self.t_imu)
+            self.axs[0].set_ylim(top=ymax, bottom=ymin)
+
             lin, = self.axs[1].get_lines()
-            lin.set_xdata(np.append(lin.get_xdata(),self.t_imu))
-            lin.set_ydata(np.append(lin.get_ydata(),self.x_hat[1]))
+            lin.set_xdata(np.append(lin.get_xdata(), self.t_imu))
+            lin.set_ydata(np.append(lin.get_ydata(), self.x_hat[1]))
             ymax = 1.2*np.max(lin.get_ydata())
-            ymin = 1.2*np.min(lin.get_ydata())            
-            self.axs[1].set_xlim(left=t_min,right=self.t_imu)
-            self.axs[1].set_ylim(top=ymax,bottom=ymin)
+            ymin = 1.2*np.min(lin.get_ydata())
+            self.axs[1].set_xlim(left=t_min, right=self.t_imu)
+            self.axs[1].set_ylim(top=ymax, bottom=ymin)
 
             lin, = self.axs[2].get_lines()
-            lin.set_xdata(np.append(lin.get_xdata(),self.t_imu))
-            lin.set_ydata(np.append(lin.get_ydata(),self.x_hat[2]))
+            lin.set_xdata(np.append(lin.get_xdata(), self.t_imu))
+            lin.set_ydata(np.append(lin.get_ydata(), self.x_hat[2]))
             ymax = 1.2*np.max(lin.get_ydata())
-            ymin = 1.2*np.min(lin.get_ydata())  
-            self.axs[2].set_xlim(left=t_min,right=self.t_imu)
-            self.axs[2].set_ylim(top=ymax,bottom=ymin)
-
+            ymin = 1.2*np.min(lin.get_ydata())
+            self.axs[2].set_xlim(left=t_min, right=self.t_imu)
+            self.axs[2].set_ylim(top=ymax, bottom=ymin)
 
             lin, = self.axs[3].get_lines()
-            lin.set_xdata(np.append(lin.get_xdata(),self.t_imu))
-            lin.set_ydata(np.append(lin.get_ydata(),self.x_hat[3]))
+            lin.set_xdata(np.append(lin.get_xdata(), self.t_imu))
+            lin.set_ydata(np.append(lin.get_ydata(), self.x_hat[3]))
             ymax = 1.2*np.max(lin.get_ydata())
-            ymin = 1.2*np.min(lin.get_ydata())              
-            self.axs[3].set_xlim(left=t_min,right=self.t_imu)
-            self.axs[3].set_ylim(top=ymax,bottom=ymin)
+            ymin = 1.2*np.min(lin.get_ydata())
+            self.axs[3].set_xlim(left=t_min, right=self.t_imu)
+            self.axs[3].set_ylim(top=ymax, bottom=ymin)
 
-            self.fig_imu.canvas.draw()             
+            self.fig_imu.canvas.draw()
             self.fig_imu.canvas.flush_events()
-
 
     def run_loop(self):
 
+        if (math.fabs(self.u) > 0.5):  # Only update if moving to avoid singularity at u=0
 
-        if(math.fabs(self.u)>0.5): # Only update if moving to avoid singularity at u=0
-            
             # Build Measurment from current Data
-            zm = np.zeros([3,1])
-            zm[0,0] = self.ax_meas - self.v*self.r_meas
-            zm[1,0] = self.ay_meas + self.u*self.r_meas
-            zm[2,0] = self.r_dot_est
-
+            zm = np.zeros([3, 1])
+            zm[0, 0] = self.ax_meas - self.v*self.r_meas
+            zm[1, 0] = self.ay_meas + self.u*self.r_meas
+            zm[2, 0] = self.r_dot_est
 
             # Define Measurement Jacobian
             H23 = self.delta/self.m - self.v/(self.m*self.u)
             H24 = ((self.b*self.r)/(self.m*self.u)) - self.v/(self.m*self.u)
 
-            H33 = self.a*self.delta/self.Jz - (self.a*self.a*self.r)/(self.Jz*self.u) - (self.a*self.v)/(self.Jz*self.u)
-            H34 = (self.b*self.v)/(self.Jz*self.u) - (self.b*self.b*self.r)/(self.Jz*self.u)
+            H33 = self.a*self.delta/self.Jz - \
+                (self.a*self.a*self.r)/(self.Jz*self.u) - \
+                (self.a*self.v)/(self.Jz*self.u)
+            H34 = (self.b*self.v)/(self.Jz*self.u) - \
+                (self.b*self.b*self.r)/(self.Jz*self.u)
 
-            self.H[0,:] = np.array([-self.u/self.m, self.V_cmd/self.m, 0, 0])
-            self.H[1,:] = np.array([0, 0, H23 , H24])
-            self.H[2,:] = np.array([0, 0, H33, H34])        
+            self.H[0, :] = np.array([-self.u/self.m, self.V_cmd/self.m, 0, 0])
+            self.H[1, :] = np.array([0, 0, H23, H24])
+            self.H[2, :] = np.array([0, 0, H33, H34])
 
             # Compute Residual
-            y = zm - np.dot(self.H,self.x_hat)
+            y = zm - np.dot(self.H, self.x_hat)
 
             # Compute Kalman Gain
-            S = np.linalg.inv(np.dot(np.dot(self.H,self.P),self.H.T) + self.R)
-            K = np.dot(np.dot(self.P,self.H.T),S)
+            S = np.linalg.inv(
+                np.dot(np.dot(self.H, self.P), self.H.T) + self.R)
+            K = np.dot(np.dot(self.P, self.H.T), S)
 
             # Update Parameter Estimate and Covariance
-            self.x_hat = self.x_hat + np.dot(K,y)
-            self.P = np.dot(self.I - np.dot(K,self.H),self.P)
+            self.x_hat = self.x_hat + np.dot(K, y)
+            self.P = np.dot(self.I - np.dot(K, self.H), self.P)
 
             # Print current Parameter Estimates
             print(self.x_hat)
@@ -245,24 +266,36 @@ class parameterEstimation(Node):
 
 def ros_spin(node):
     rclpy.spin(node)
-        
+
 
 def main(args=None):
+    # Initialize the ROS 2 Python client library
     rclpy.init(args=args)
 
+    # Create an instance of the parameterEstimation class
     param_est = parameterEstimation()
 
+    # Enable interactive mode for matplotlib
     plt.ion()
 
-    
-    while(rclpy.ok):
+    # Run the main loop until the ROS 2 context is still valid
+    while (rclpy.ok):
+        # Update the plots
         param_est.update_plots()
 
+        # Process any pending events and callbacks
         rclpy.spin_once(param_est)
+
+        # Sleep for a short duration to control the loop rate
         time.sleep(0.01)
 
+    # Clean up and destroy the node
     param_est.destroy_node()
+
+    # Print a message indicating that the run has finished
     print("Run Finished")
+
+    # Shut down the ROS 2 Python client library
     rclpy.shutdown()
 
 
