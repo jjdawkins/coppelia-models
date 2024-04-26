@@ -37,11 +37,11 @@ class nsaidEstimation(Node):
 
         # create timer that sends velocity commands
         self.dt = 0.01
-        self.timer = self.create_timer(self.dt, self.run_loop)
+        self.timer = self.create_timer(0.05, self.run_loop)
 
         # create the reference functions (use subs to evaluate)
         t = symbols('t')
-        ref_v = Array([2 + 0.5*sin(0.5 * t), 0.5 + 0.5 * sin(0.1*t), 0])
+        ref_v = Array([2.5 + 0.5*sin(1 * t), 0.5 + 1.5 * sin(0.3*t), 0])
         self.ref_v = lambdify(t, ref_v, 'numpy')
         self.ref_v_dot = lambdify(t, diff(ref_v, t), 'numpy')
 
@@ -50,7 +50,8 @@ class nsaidEstimation(Node):
 
         # define the parameters
         self.l = 0.170
-        self.theta_0 = np.array([4.378, 0.0715, 2, 3, 10, 20, -20])
+        #                          m       Jz   k c_rr c_af c_s  c_d
+        self.theta_0 = np.array([4.378, 0.0715, 3,  3,  15, 20, -35])
 
         # make column vector of parameters
         self.theta_h = np.copy(self.theta_0)
@@ -59,7 +60,7 @@ class nsaidEstimation(Node):
         self.k1 = 2
         self.k2 = 1
         # make our adaptive gains
-        self.gamma = 5 * np.diag([1e-3, 1e-3, 1e-1, 1e-1, 1, 1, 1])
+        self.gamma = 10 * np.diag([1e-3, 1e-3, 1e-2, 1e-2, 1, 1, 1])
 
         # start moving!
         self.send_cmd_vel(2.0, 0.0)
@@ -189,11 +190,6 @@ class nsaidEstimation(Node):
         # get delta_z_dot (this is a 1x3)
         delta_z_dot = self.z_dot - self.z_dot_d
 
-        # print each delta_z_dot value with constant width
-        for i in range(3):
-            print(f"{delta_z_dot[i]:.4f}", end=" ")
-        print()
-
         # Evaluate W_z (this is a 2x7 matrix)
         self.eval_W_z()
 
@@ -216,7 +212,6 @@ class nsaidEstimation(Node):
 
         # update the control inputs
         self.eval_control()
-        print(self.C)
 
         # send the control inputs
         self.send_cmd_vel(self.C[0], self.C[1])
