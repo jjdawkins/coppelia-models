@@ -41,7 +41,7 @@ class nsaidEstimation(Node):
 
         # create the reference functions (use subs to evaluate)
         t = symbols('t')
-        ref_v = Array([2.5 + 0.5*sin(0.5 * t), 0.3 * sin(0.1*t), 0])
+        ref_v = Array([2 + 0.5*sin(0.5 * t), 0.5 + 0.5 * sin(0.1*t), 0])
         self.ref_v = lambdify(t, ref_v, 'numpy')
         self.ref_v_dot = lambdify(t, diff(ref_v, t), 'numpy')
 
@@ -50,16 +50,16 @@ class nsaidEstimation(Node):
 
         # define the parameters
         self.l = 0.170
-        self.theta_0 = np.array([4.378, 0.0715, 0.1, 0.1, 10, 20, -10])
+        self.theta_0 = np.array([4.378, 0.0715, 2, 3, 10, 20, -20])
 
         # make column vector of parameters
         self.theta_h = np.copy(self.theta_0)
 
         # make our controller gains
-        self.k1 = 1
+        self.k1 = 2
         self.k2 = 1
         # make our adaptive gains
-        self.gamma = 1 * np.diag([1e-3, 1e-3, 1e-1, 1e-1, 1, 1, 1])
+        self.gamma = 5 * np.diag([1e-3, 1e-3, 1e-1, 1e-1, 1, 1, 1])
 
         # start moving!
         self.send_cmd_vel(2.0, 0.0)
@@ -236,12 +236,7 @@ def main(args=None):
     nsaid_est = nsaidEstimation()
 
     # Run the main loop until the ROS 2 context is still valid
-    while (rclpy.ok):
-        # Process any pending events and callbacks
-        rclpy.spin_once(nsaid_est)
-
-        # Sleep for a short duration to control the loop rate
-        time.sleep(0.01)
+    rclpy.spin(nsaid_est)
 
     # Clean up and destroy the node
     nsaidEstimation.destroy_node()
