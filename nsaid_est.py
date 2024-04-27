@@ -51,16 +51,16 @@ class nsaidEstimation(Node):
         # define the parameters
         self.l = 0.170
         #                          m       Jz   k c_rr c_af c_s  c_d
-        self.theta_0 = np.array([4.378, 0.0715, 3,  3,  15, 20, -35])
+        self.theta_0 = np.array([4.378, 0.0715, 3,  3,  15, 20, -10])
 
         # make column vector of parameters
         self.theta_h = np.copy(self.theta_0)
 
         # make our controller gains
-        self.k1 = 2
-        self.k2 = 1
+        self.k1 = 2  # throttle gain
+        self.k2 = 0.5  # steering gain
         # make our adaptive gains
-        self.gamma = 10 * np.diag([1e-3, 1e-3, 1e-2, 1e-2, 1, 1, 1])
+        self.gamma = 10 * np.diag([1e-3, 1e-3, 1e-2, 1e-2, 5, 5, 5])
 
         # start moving!
         self.send_cmd_vel(2.0, 0.0)
