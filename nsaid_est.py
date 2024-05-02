@@ -59,8 +59,8 @@ class nsaidEstimation(Node):
         # make our controller gains
         self.k1 = 2  # throttle gain
         self.k2 = 0.5  # steering gain
-        # make our adaptive gains
-        self.gamma = 10 * np.diag([1e-3, 1e-3, 1e-2, 1e-2, 5, 5, 5])
+        # make our adaptive gains  m      J_z  k    c_rr c_af c_s  c_d
+        self.gamma = 10 * np.diag([1e-3, 1e-3, 1e-2, 1e-2, 0.5,   5,  5])
 
         # start moving!
         self.send_cmd_vel(2.0, 0.0)
