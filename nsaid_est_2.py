@@ -42,7 +42,7 @@ class nsaidEstimation(Node):
 
         # create the reference functions (use subs to evaluate)
         t = symbols('t')
-        ref_v = Array([2.5 + 0.5*sin(0.5 * t), 0.2 + 0.3*sin(0.41*t) + 0.2 * sin(0.31*t), 0])
+        ref_v = Array([2.5 + 0.5*sin(1 * t), 0.5 + 1.5 * sin(0.3*t), 0])
         self.ref_v = lambdify(t, ref_v, 'numpy')
         self.ref_v_dot = lambdify(t, diff(ref_v, t), 'numpy')
 
@@ -52,14 +52,14 @@ class nsaidEstimation(Node):
         # define the parameters
         self.l = 0.170
         #                          m       Jz   k c_rr c_af c_s  c_d
-        self.theta_0 = np.array([4.378, 0.0715, 3,  3,  15,  20, 5])
+        self.theta_0 = np.array([4.378, 0.0715, 3,  3,  15, 20, -10])
 
         # make column vector of parameters
         self.theta_h = np.copy(self.theta_0)
 
         # make our controller gains
         self.k1 = 2  # throttle gain
-        self.k2 = 0.1  # steering gain
+        self.k2 = 0.5  # steering gain
         # make our adaptive gains  m      J_z  k    c_rr c_af c_s  c_d
         self.gamma = 10 * np.diag([1e-3, 1e-3, 1e-2, 1e-2, 0.5,   5,  5])
 
@@ -68,7 +68,7 @@ class nsaidEstimation(Node):
         time.sleep(1)
 
     def get_z_d(self, t):
-        # will return the DESIRED z_dot_d and z_ddot_d for a given t as a numpy array
+        # will return the z_dot_d and z_ddot_d for a given t as a numpy array
         ref_v = self.ref_v(t)
         ref_v_dot = self.ref_v_dot(t)
 
