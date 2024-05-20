@@ -1,5 +1,33 @@
 from matplotlib import pyplot as plt
+from matplotlib.lines import Line2D
 import numpy as np
+
+
+def init_vel_plot(self):
+    # make axes
+    self.fig, self.ax = plt.subplots(2, 1)
+    self.ax[0].set_title("Forward Velocity")
+    self.ax[0].set_xlabel("Time (s)")
+    self.ax[0].set_ylabel("Velocity (m/s)")
+    self.ax[1].set_title("Yaw Rate")
+    self.ax[1].set_xlabel("Time (s)")
+    self.ax[1].set_ylabel("Yaw Rate (rad/s)")
+
+    self.lines = [Line2D([0], [0], color='blue', lw=2),
+                  Line2D([0], [0], color='orange', lw=2, linestyle='--'),
+                  Line2D([0], [0], color='blue', lw=2),
+                  Line2D([0], [0], color='orange', lw=2, linestyle='--')]
+
+    self.ax[0].add_line(self.lines[0])
+    self.ax[0].add_line(self.lines[1])
+    self.ax[1].add_line(self.lines[2])
+    self.ax[1].add_line(self.lines[3])
+
+    self.ax[0].legend(
+        self.lines, ['Measured', 'Desired'], loc='upper left')
+    self.ax[1].legend(
+        self.lines, ['Measured', 'Desired'], loc='upper left')
+    plt.draw()
 
 
 def plot_vel(self):

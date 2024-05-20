@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 class nsaidEstimation(Node):
     # import methods from other files
     from ._eval_mat import eval_W_z, eval_control
-    from ._plot_vel import plot_vel, update_histories
+    from ._plot_vel import plot_vel, update_histories, init_vel_plot
     from ._ref_signals import update_t, get_z_d, update_z_d
     from ._run_loop import run_loop
     from ._sub_pub import odom_callback, send_cmd_vel
@@ -20,6 +20,9 @@ class nsaidEstimation(Node):
     def __init__(self):
         super().__init__('nsaid_estimation')
         print("nsaid_estimation node started")
+
+        # call init functions
+        self.init_vel_plot()
 
         # create time variables
         sec, nsec = self.get_clock().now().seconds_nanoseconds()
@@ -39,7 +42,7 @@ class nsaidEstimation(Node):
 
         # create timer that sends velocity commands
         self.dt = 0.01
-        self.timer = self.create_timer(0.05, self.run_loop)
+        self.timer = self.create_timer(self.dt, self.run_loop)
 
         # create the reference functions (use subs to evaluate)
         t = symbols('t')
@@ -70,31 +73,6 @@ class nsaidEstimation(Node):
         self.z_dot_hist = np.zeros((3, 1))
         self.z_dot_d_hist = np.zeros((3, 1))
         self.t_hist = np.zeros((1, 1))
-
-        # make axes
-        self.fig, self.ax = plt.subplots(2, 1)
-        self.ax[0].set_title("Forward Velocity")
-        self.ax[0].set_xlabel("Time (s)")
-        self.ax[0].set_ylabel("Velocity (m/s)")
-        self.ax[1].set_title("Yaw Rate")
-        self.ax[1].set_xlabel("Time (s)")
-        self.ax[1].set_ylabel("Yaw Rate (rad/s)")
-
-        self.lines = [Line2D([0], [0], color='blue', lw=2),
-                      Line2D([0], [0], color='orange', lw=2, linestyle='--'),
-                      Line2D([0], [0], color='blue', lw=2),
-                      Line2D([0], [0], color='orange', lw=2, linestyle='--')]
-
-        self.ax[0].add_line(self.lines[0])
-        self.ax[0].add_line(self.lines[1])
-        self.ax[1].add_line(self.lines[2])
-        self.ax[1].add_line(self.lines[3])
-
-        self.ax[0].legend(
-            self.lines, ['Measured', 'Desired'], loc='upper left')
-        self.ax[1].legend(
-            self.lines, ['Measured', 'Desired'], loc='upper left')
-        plt.draw()
 
         # start moving!
         self.send_cmd_vel(2.0, 0.0)
