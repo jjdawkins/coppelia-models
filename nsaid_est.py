@@ -13,6 +13,9 @@ from geometry_msgs.msg import Twist, Pose, Vector3
 from sensor_msgs.msg import Imu
 from sympy import Matrix, symbols, sin, lambdify, Array, diff
 
+import matplotlib.animation as animation
+from matplotlib.lines import Line2D
+
 
 class nsaidEstimation(Node):
     def __init__(self):
@@ -35,14 +38,14 @@ class nsaidEstimation(Node):
         self.z_dot = np.zeros(3)
         self.t_odom = -5
 
-
         # create timer that sends velocity commands
         self.dt = 0.01
         self.timer = self.create_timer(0.05, self.run_loop)
 
         # create the reference functions (use subs to evaluate)
         t = symbols('t')
-        ref_v = Array([2.5 + 0.5*sin(0.5 * t), 0.2 + 0.3*sin(0.41*t) + 0.2 * sin(0.31*t), 0])
+        ref_v = Array([2.7 + 0.2*sin(1.41*t + 2) + 0.5*sin(0.5 * t), 0.3 * sin(0.05 *
+                      t + 1) + 0.1 * sin(1.51*t) + 0.15 * sin(0.31*t), 0])
         self.ref_v = lambdify(t, ref_v, 'numpy')
         self.ref_v_dot = lambdify(t, diff(ref_v, t), 'numpy')
 
@@ -52,16 +55,48 @@ class nsaidEstimation(Node):
         # define the parameters
         self.l = 0.170
         #                          m       Jz   k c_rr c_af c_s  c_d
-        self.theta_0 = np.array([4.378, 0.0715, 3,  3,  15,  20, 5])
+        self.theta_0 = np.array([4.378, 0.0715, 3,  3,  12,  20, 5])
 
         # make column vector of parameters
         self.theta_h = np.copy(self.theta_0)
 
         # make our controller gains
-        self.k1 = 2  # throttle gain
-        self.k2 = 0.1  # steering gain
+        self.k1 = 1.5  # throttle gain
+        self.k2 = 0.03  # steering
+
         # make our adaptive gains  m      J_z  k    c_rr c_af c_s  c_d
-        self.gamma = 10 * np.diag([1e-3, 1e-3, 1e-2, 1e-2, 0.5,   5,  5])
+        self.gamma = 1 * np.diag([5e-2, 5e-2, 1e-3, 1e-3, 10,   10,  10])
+
+        # init the z_dot history vector
+        self.z_dot_hist = np.zeros((3, 1))
+        self.z_dot_d_hist = np.zeros((3, 1))
+        self.t_hist = np.zeros((1, 1))
+
+        # make axes
+        self.fig, self.ax = plt.subplots(2, 1)
+        self.ax[0].set_title("Forward Velocity")
+        self.ax[0].set_xlabel("Time (s)")
+        self.ax[0].set_ylabel("Velocity (m/s)")
+        self.ax[1].set_title("Yaw Rate")
+        self.ax[1].set_xlabel("Time (s)")
+        self.ax[1].set_ylabel("Yaw Rate (rad/s)")
+
+        self.lines = [Line2D([0], [0], color='blue', lw=2),
+                      Line2D([0], [0], color='orange', lw=2, linestyle='--'),
+                      Line2D([0], [0], color='blue', lw=2),
+                      Line2D([0], [0], color='orange', lw=2, linestyle='--')]
+
+        self.ax[0].add_line(self.lines[0])
+        self.ax[0].add_line(self.lines[1])
+        self.ax[1].add_line(self.lines[2])
+        self.ax[1].add_line(self.lines[3])
+
+        self.ax[0].legend(
+            self.lines, ['Measured', 'Desired'], loc='upper left')
+        self.ax[1].legend(
+            self.lines, ['Measured', 'Desired'], loc='upper left')
+        plt.ion()
+        plt.draw()
 
         # start moving!
         self.send_cmd_vel(2.0, 0.0)
@@ -108,6 +143,14 @@ class nsaidEstimation(Node):
         # update the reference velocity and acceleration values
         self.z_dot_d = self.ref_v(self.t)
         self.z_ddot_d = self.ref_v_dot(self.t)
+
+    def update_histories(self):
+        # update the HISTORIES
+        self.z_dot_hist = np.append(
+            self.z_dot_hist, np.reshape(self.z_dot, (3, 1)), axis=1)
+        self.z_dot_d_hist = np.append(
+            self.z_dot_d_hist, np.reshape(self.z_dot_d, (3, 1)), axis=1)
+        self.t_hist = np.append(self.t_hist, self.t)
 
     def eval_W_z(self):
         # Evaluate the 2x7 W_z matrix and return as a numpy array
@@ -169,18 +212,35 @@ class nsaidEstimation(Node):
 
         self.C = C
 
+    def plot_vel(self):
+
+        # plot the velocity values
+        self.lines[0].set_data(self.t_hist, self.z_dot_hist[0, :])
+        self.lines[1].set_data(self.t_hist, self.z_dot_d_hist[0, :])
+        self.lines[2].set_data(self.t_hist, self.z_dot_hist[1, :])
+        self.lines[3].set_data(self.t_hist, self.z_dot_d_hist[1, :])
+
+        # update the plot
+        self.ax[0].relim()
+        self.ax[0].autoscale_view()
+        self.ax[1].relim()
+        self.ax[1].autoscale_view()
+
+        plt.draw()
+        plt.pause(0.0001)
+
     def run_loop(self):
         # update the time
         self.update_t()
 
         # make sure that messages are being received
         if self.t - self.t_odom > 0.2:
-            print("No messages received!")
+            print("No messages received!", end="\r")
             self.send_cmd_vel(2.0, 0.0)
             return
 
         # make sure speed is not zero
-        if self.z_dot[0] < 0.5:
+        if self.z_dot[0] < 0.2:
             print("Speed too low!")
             self.send_cmd_vel(2.0, 0.0)
             return
@@ -192,7 +252,7 @@ class nsaidEstimation(Node):
         # Evaluate W_z (this is a 2x7 matrix)
         self.eval_W_z()
 
-        # Calculate the update increment
+        # Calculate the parameter update increment
         W_z_T = np.transpose(self.W_z)  # 7x2
         delta_z_dot2 = np.reshape(delta_z_dot[0:2], (2, 1))  # 2x1
         delta_theta_h = -self.gamma @ W_z_T @ delta_z_dot2
@@ -206,11 +266,17 @@ class nsaidEstimation(Node):
         # apply the parameter updated
         self.theta_h = self.theta_h + delta_theta_h * self.dt
 
+        # get new reference velocity values
+        self.update_z_d()
+
+        # update the histories
+        self.update_histories()
+
         # update the control inputs
         self.eval_control()
 
-        # get new reference velocity values
-        self.update_z_d()
+        # update plots
+        self.plot_vel()
 
         # send the control inputs
         self.send_cmd_vel(self.C[0], self.C[1])
