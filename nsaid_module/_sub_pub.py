@@ -11,10 +11,6 @@ def odom_callback(self, msg):
     # update the z_dot vector
     self.z_dot = np.array([x_dot, psi_dot, y_dot])
 
-    # update the time
-    self. t_odom = self.t
-
-
 def send_cmd_vel(self, omega, delta):
     twist = Twist()
     twist.linear.x = omega
