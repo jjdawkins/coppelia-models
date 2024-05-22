@@ -19,7 +19,7 @@ class nsaidEstimation(Node):
     from ._set_gains import init_gains
 
     def __init__(self):
-        super().__init__('nsaid_estimation')
+        super().__init__("nsaid_estimation")
         print("nsaid_estimation node started")
 
         # call init functions
@@ -28,15 +28,21 @@ class nsaidEstimation(Node):
         self.update_t(setInit=True)
         self.init_ref_signals()
 
+        self.dot_n = 0
+        self.twirl = ["|", "/", "-", "\\"]
+
         # publish to cmd vel topic
-        self.vel_topic = '/rover/cmd_vel'
+        self.vel_topic = "/rover/cmd_vel"
         self.vel_pub = self.create_publisher(Twist, self.vel_topic, 10)
 
         # subscribe to the odometry topic
+        self.t_odom = self.t
         self.odom_sub = self.create_subscription(
-            Odometry, '/rover/mocap/odom', self.odom_callback, 10)
+            Odometry, "/rover/mocap/odom", self.odom_callback, 10
+        )
 
         # create timer that executes the run loop (NOT USED IF RUN ONCE)
+        self.dt = 0.01
         self.timer = self.create_timer(self.dt, self.run_loop)
 
         # get starting values

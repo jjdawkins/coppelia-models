@@ -7,19 +7,24 @@ def run_loop(self):
 
     # make sure that messages are being received
     if self.t - self.t_odom > 0.2:
-        print("No messages received!", end="\r")
+
+        self.dot_n = (self.dot_n + 1) % len(self.twirl)
+        print(f"No messages received! {self.twirl[self.dot_n]}", end="\r")
         self.send_cmd_vel(2.0, 0.0)
         return
 
     # make sure speed is not zero
-    if self.z_dot[0] < 0.2:
-        print("Speed too low!")
+    if self.z_dot[0] < 0.1:
+        print(f"Speed too low! {self.z_dot[0]:.2f} m/s", end="\r")
         self.send_cmd_vel(2.0, 0.0)
         return
 
     # print(f"t: {self.t:.2f}")
     # get delta_z_dot (this is a 1x3)
     delta_z_dot = self.z_dot - self.z_dot_d
+
+    # get new reference velocity values
+    self.update_z_d()
 
     # Evaluate W_z (this is a 2x7 matrix)
     self.eval_W_z()
@@ -37,9 +42,6 @@ def run_loop(self):
 
     # apply the parameter updated
     self.theta_h = self.theta_h + delta_theta_h * self.dt
-
-    # get new reference velocity values
-    self.update_z_d()
 
     # update the histories
     self.update_histories()

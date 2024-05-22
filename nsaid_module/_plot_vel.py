@@ -14,9 +14,9 @@ def init_vel_plot(self):
     self.ax[1].set_ylabel("Yaw Rate (rad/s)")
 
     self.vel_lines = [Line2D([0], [0], color='blue', lw=2),
-                  Line2D([0], [0], color='orange', lw=2, linestyle='--'),
-                  Line2D([0], [0], color='blue', lw=2),
-                  Line2D([0], [0], color='orange', lw=2, linestyle='--')]
+                      Line2D([0], [0], color='orange', lw=2, linestyle='--'),
+                      Line2D([0], [0], color='blue', lw=2),
+                      Line2D([0], [0], color='orange', lw=2, linestyle='--')]
 
     self.ax[0].add_line(self.vel_lines[0])
     self.ax[0].add_line(self.vel_lines[1])
@@ -32,10 +32,10 @@ def init_vel_plot(self):
 
 def plot_vel(self):
     # plot the velocity values
-    self.vel_lines[0].set_data(self.t_hist, self.z_dot_hist[0, :])
-    self.vel_lines[1].set_data(self.t_hist, self.z_dot_d_hist[0, :])
-    self.vel_lines[2].set_data(self.t_hist, self.z_dot_hist[1, :])
-    self.vel_lines[3].set_data(self.t_hist, self.z_dot_d_hist[1, :])
+    self.vel_lines[0].set_data(self.t_hist[1:], self.z_dot_hist[0, 1:])
+    self.vel_lines[1].set_data(self.t_hist[1:], self.z_dot_d_hist[0, 1:])
+    self.vel_lines[2].set_data(self.t_hist[1:], self.z_dot_hist[1, 1:])
+    self.vel_lines[3].set_data(self.t_hist[1:], self.z_dot_d_hist[1, 1:])
 
     # update the plot
     self.ax[0].relim()
