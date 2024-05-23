@@ -12,7 +12,14 @@ import matplotlib.pyplot as plt
 class nsaidEstimation(Node):
     # import methods from other files
     from ._eval_mat import eval_W_z, eval_control
-    from ._plot_vel import plot_vel, update_histories, init_vel_plot
+    from ._plot_vel import (
+        plot_vel,
+        update_histories,
+        init_vel_plot,
+        init_error_plot,
+        plot_error,
+    )
+    from ._plot_params import init_param_plot, plot_params
     from ._ref_signals import update_t, get_z_d, update_z_d, init_ref_signals
     from ._run_loop import run_loop
     from ._sub_pub import odom_callback, send_cmd_vel
@@ -24,7 +31,9 @@ class nsaidEstimation(Node):
 
         # call init functions
         self.init_vel_plot()
+        self.init_error_plot()
         self.init_gains()
+        self.init_param_plot()
         self.update_t(setInit=True)
         self.init_ref_signals()
 

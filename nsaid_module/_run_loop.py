@@ -9,7 +9,7 @@ def run_loop(self):
     if self.t - self.t_odom > 0.2:
 
         self.dot_n = (self.dot_n + 1) % len(self.twirl)
-        print(f"No messages received! {self.twirl[self.dot_n]}", end="\r")
+        print(f"No messages received! {self.twirl[self.dot_n] + ' '*8} ", end="\r")
         self.send_cmd_vel(2.0, 0.0)
         return
 
@@ -36,15 +36,8 @@ def run_loop(self):
     # force a 1x7 shape
     delta_theta_h = np.reshape(delta_theta_h, 7)
 
-    # print each theata_h value with constant width
-    # for i in range(7):
-    #     print(f"{self.theta_h[i]:.4f}", end=" ")
-
     # apply the parameter updated
     self.theta_h = self.theta_h + delta_theta_h * self.dt
-
-    # update the histories
-    self.update_histories()
 
     # update the control inputs
     self.eval_control()
