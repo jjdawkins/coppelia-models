@@ -12,7 +12,7 @@ def create_Wz_C(self):
     )
 
     # define measured state values
-    x_dot, y_dot, psi_dot = sp.symbols("x_dot psi_dot y_dot", real=True)
+    x_dot, y_dot, psi_dot = sp.symbols("x_dot y_dot psi_dot", real=True)
     x_ddot, y_ddot, psi_ddot = sp.symbols("x_ddot y_ddot psi_ddot", real=True)
     # define desired values
     x_dot_d, y_dot_d, psi_dot_d = sp.symbols("x_dot_d y_dot_d psi_dot_d", real=True)
@@ -29,10 +29,10 @@ def create_Wz_C(self):
     u = sp.Matrix([i_in, delta_in])
 
     # Make state vectors
-    z = sp.Matrix([x_dot, psi_dot, y_dot])
-    z_dot = sp.Matrix([x_ddot, psi_ddot, y_ddot])
-    z_d = sp.Matrix([x_dot_d, psi_dot_d, y_dot_d])
-    z_dot_d = sp.Matrix([x_ddot_d, psi_ddot_d, y_ddot_d])
+    z_dot = sp.Matrix([x_dot, psi_dot, y_dot])
+    z_ddot = sp.Matrix([x_ddot, psi_ddot, y_ddot])
+    z_dot_d = sp.Matrix([x_dot_d, psi_dot_d, y_dot_d])
+    z_ddot_d = sp.Matrix([x_ddot_d, psi_ddot_d, y_ddot_d])
 
     # Make the theta vector
     theta = sp.Matrix([m, j_z, k, c_rr, c_af, c_s, c_d])
@@ -76,31 +76,47 @@ def create_Wz_C(self):
     assert check1.simplify() == None
 
     # get B and A st G = B * A * u
-    B = sp.Matrix([[1, 0], [0, l], [0, 1]])
+    A = sp.diag(k, c_af)
+    B = G_u @ sp.Inverse(A)
+    B.simplify()
     B_bar = B[:2, :]
-    A = sp.diag(k, i_in)
+    sp.pprint(B_bar)
 
     # check that G = B * A * u
     check2 = G - B @ A @ u
     assert check2.simplify() == None
 
-    W_m = (M @ z_dot).jacobian(theta)
+    W_m = (M @ z_ddot_d).jacobian(theta)
+    print(f"W_m:\n")
+    sp.pprint(W_m)
+    W_m.simplify()
     W_f = F.jacobian(theta)
+    W_f.simplify()
     W_g = G.jacobian(theta)
+    W_g.simplify()
 
     # define controller regressor
     W_m_bar = W_m[:2, :]
     W_f_bar = W_f[:2, :]
     W_c = W_m_bar - W_f_bar
+    sp.pprint(W_c)
 
     # define the controller
     delta_z_dot = z_dot - z_dot_d
     delta_z_dot_bar = delta_z_dot[:2, :]
-    C = sp.Inverse(A) @ B_bar @ W_c @ theta - k_diag @ delta_z_dot_bar
+    C = sp.Inverse(A) @ sp.Inverse(B_bar) @ W_c @ theta - k_diag @ delta_z_dot_bar
     C.simplify()
     sp.pprint(C)
 
-    C_func = sp.lambdify([z_dot_d, z_d, z_dot, theta, k_vec], C, "numpy")
+    # check the controlled dynamics by substituting C into the dynamics
+    print(f"Controlled Dynamics:\n")
+    controlled_dynamics = D_m.subs(zip(u,C)) - M @ z_ddot_d
+    controlled_dynamics.simplify()
+    sp.pprint(controlled_dynamics)
+
+
+
+    C_func = sp.lambdify([z_ddot_d, z_dot_d, z_dot, theta, k_vec], C, "numpy")
 
 
 if __name__ == "__main__":
