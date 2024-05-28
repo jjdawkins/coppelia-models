@@ -63,9 +63,12 @@ def create_Wz_C(self):
     sp.pprint(D_m)
 
     G_u = D_m.jacobian(u)
+    G_u.simplify()
+    print(f"G_u:\n")
     sp.pprint(G_u)
 
     G = G_u @ u
+    print(f"G:\n")
     sp.pprint(G)
 
     F = D_m - G
@@ -77,6 +80,11 @@ def create_Wz_C(self):
 
     # get B and A st G = B * A * u
     A = sp.diag(k, c_af)
+    print(f"A:\n")
+    sp.pprint(A)
+    W_a_vec = (A @ sp.ones(2, 1)).jacobian(theta)
+    print(f"W_a_vec:\n")
+    sp.pprint(W_a_vec)
     B = G_u @ sp.Inverse(A)
     B.simplify()
     B_bar = B[:2, :]
@@ -114,9 +122,30 @@ def create_Wz_C(self):
     controlled_dynamics.simplify()
     sp.pprint(controlled_dynamics)
 
-
-
     C_func = sp.lambdify([z_ddot_d, z_dot_d, z_dot, theta, k_vec], C, "numpy")
+
+    # MAKE W_z FUNCTION ########################################
+    p = theta.shape[0] # should be 7
+    delta_theta = sp.Matrix([sp.symbols(f"Delta-theta{i}") for i in range(p)])
+    theta_hat = sp.Matrix([sp.symbols(f"theta-hat{i}") for i in range(p)])
+
+    W_delta = A.subs(zip(theta, delta_theta)) @ sp.Inverse(A.subs(zip(theta, theta_hat))) @ W_c @ theta_hat
+
+    W_delta = W_delta.jacobian(delta_theta)
+
+    W_delta.simplify()
+    print(f"W_delta:\n")
+    sp.pprint(W_delta)
+
+    W_z = W_c - W_delta
+    W_z.simplify()
+    W_z = W_z.subs(zip(theta_hat, theta))
+    print(f"W_z:\n") 
+    sp.pprint(W_z)
+
+    W_z_func = sp.lambdify([z_ddot_d, z_dot, theta], W_z, "numpy")
+
+    return C_func, W_z_func
 
 
 if __name__ == "__main__":
