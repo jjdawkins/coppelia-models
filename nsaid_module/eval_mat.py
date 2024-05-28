@@ -1,5 +1,6 @@
 # uses sympy to create W_z function and C function
 import sympy as sp
+import numpy as np
 
 
 def create_Wz_C(self):
@@ -122,7 +123,7 @@ def create_Wz_C(self):
     controlled_dynamics.simplify()
     sp.pprint(controlled_dynamics)
 
-    C_func = sp.lambdify([z_ddot_d, z_dot_d, z_dot, theta, k_vec], C, "numpy")
+    C_func = sp.lambdify([self, z_ddot_d, z_dot_d, z_dot, theta, k_vec], C, "numpy", dummify= True)
 
     # MAKE W_z FUNCTION ########################################
     p = theta.shape[0] # should be 7
@@ -143,7 +144,13 @@ def create_Wz_C(self):
     print(f"W_z:\n") 
     sp.pprint(W_z)
 
-    W_z_func = sp.lambdify([z_ddot_d, z_dot, theta], W_z, "numpy")
+    W_z_func = sp.lambdify([self, z_ddot_d, z_dot, theta], W_z, "numpy", dummify= True)
+
+    test_m = sp.diag(*theta)
+    test_m_func = sp.lambdify([self, theta], test_m, "numpy", dummify= True)
+
+    print(f"Test M:\n")
+    sp.pprint(test_m_func(0,[1, 2, 3, 4, 5, 6, 7]))
 
     return C_func, W_z_func
 
