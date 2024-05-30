@@ -48,5 +48,5 @@ def run_loop(self):
         self.z_ddot_d, self.z_dot_d, self.z_dot, self.theta_h, self.k_vec
     )
 
-    # send the control inputs
+    # send the control inputs # CHANGE TO CONTROL WHEEL SPEED
     self.send_cmd_vel(2.0, self.C[1, 0])
