@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 
 class nsaidEstimation(Node):
     # import methods from other files
-    from ._eval_mat import eval_W_z, eval_control
     from ._plot_vel import (
         plot_vel,
         update_histories,
@@ -24,6 +23,7 @@ class nsaidEstimation(Node):
     from ._run_loop import run_loop
     from ._sub_pub import odom_callback, send_cmd_vel
     from ._set_gains import init_gains
+    from ._eval_mat import create_C_Wz
 
     def __init__(self):
         super().__init__("nsaid_estimation")
@@ -36,6 +36,7 @@ class nsaidEstimation(Node):
         self.init_param_plot()
         self.update_t(setInit=True)
         self.init_ref_signals()
+        self.C_func, self.W_z_func = self.create_C_Wz()
 
         self.dot_n = 0
         self.twirl = ["|", "/", "-", "\\"]

@@ -27,7 +27,9 @@ def run_loop(self):
     self.update_z_d()
 
     # Evaluate W_z (this is a 2x7 matrix)
-    self.eval_W_z()
+    # W_z_func = sp.lambdify([self, z_ddot_d, z_dot, theta], W_z, "numpy", dummify=True)
+    # returns a 2x7 numpy array
+    self.W_z = self.W_z_func(self.z_ddot_d, self.z_dot, self.theta_h)
 
     # Calculate the parameter update increment
     W_z_T = np.transpose(self.W_z)  # 7x2
@@ -40,7 +42,11 @@ def run_loop(self):
     self.theta_h = self.theta_h + delta_theta_h * self.dt
 
     # update the control inputs
-    self.eval_control()
+    # [self, z_ddot_d, z_dot_d, z_dot, theta, k_vec], C, "numpy", dummify=True
+    # returns a 2x1 numpy array
+    self.C = self.C_func(
+        self.z_ddot_d, self.z_dot_d, self.z_dot, self.theta_h, self.k_vec
+    )
 
     # send the control inputs
-    self.send_cmd_vel(self.C[0], self.C[1])
+    self.send_cmd_vel(2.0, self.C[1, 0])

@@ -20,7 +20,8 @@ def init_gains(self):
 
     # make our controller gains
     self.k1 = 1.0  # throttle gain
-    self.k2 = 0.05  # steering
+    self.k2 = 0.05  # steering gain
+    self.k_vec = np.array([self.k1, self.k2])
 
     # make our adaptive gains  m    J_z    k     c_rr c_af c_s  c_d
     self.gamma = 10 * np.diag([1e-3, 1e-2, 5e-3, 5e-3, 5, 5, 5])

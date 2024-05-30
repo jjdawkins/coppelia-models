@@ -11,7 +11,7 @@ def main(args=None):
     # Create an instance of the parameterEstimation class
     nsaid_est = nsaidEstimation()
 
-    doPlot = True
+    doPlot = 1
     # turn on interactive plotting
     plt.ion()
 

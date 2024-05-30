@@ -1,63 +1,175 @@
+# uses sympy to create W_z function and C function
+import sympy as sp
 import numpy as np
 
 
-def eval_W_z(self):
-    # Evaluate the 2x7 W_z matrix and return as a numpy array
-    l = self.l
-    x_ddot_d = self.z_ddot_d[0]
-    psi_ddot_d = self.z_ddot_d[1]
-    y_ddot_d = self.z_ddot_d[2]
-    x_dot = self.z_dot[0]
-    psi_dot = self.z_dot[1]
-    y_dot = self.z_dot[2]
-    m_hat = self.theta_h[0]
-    j_z_hat = self.theta_h[1]
-    k_hat = self.theta_h[2]
-    c_rr_hat = self.theta_h[3]
-    c_af_hat = self.theta_h[4]
-    c_s_hat = self.theta_h[5]
-    c_d_hat = self.theta_h[6]
+def create_C_Wz(self):
+    # pretty print the function
+    sp.init_printing()
 
-    # init the W_z matrix
-    W_z = np.zeros((2, 7))
+    # IMPORTANT DEFINE L
+    l = self.l  # 0.17 for coppeliasim rover
 
-    # fill in the values (Copied from MATLAB)
-    W_z[0][0] = x_ddot_d-psi_dot*y_dot
-    W_z[0][2] = -(c_rr_hat*x_dot)/k_hat - \
-        (m_hat*(x_ddot_d-psi_dot*y_dot))/k_hat
-    W_z[0][3] = x_dot
-    W_z[1][1] = psi_ddot_d
-    W_z[1][4] = -(c_d_hat*l*y_dot+j_z_hat*psi_ddot_d*x_dot +
-                  c_s_hat*(l*l)*psi_dot)/(c_af_hat*x_dot)
-    W_z[1][5] = ((l*l)*psi_dot)/x_dot
-    W_z[1][6] = (l*y_dot)/x_dot
+    # make theta variables
+    m, j_z, k, c_rr, c_af, c_s, c_d = sp.symbols(
+        r"m j_z k c_rr c_af c_s c_d", real=True
+    )
 
-    self.W_z = W_z
+    # define measured state values
+    x_dot, y_dot, psi_dot = sp.symbols("x_dot y_dot psi_dot", real=True)
+    x_ddot, y_ddot, psi_ddot = sp.symbols("x_ddot y_ddot psi_ddot", real=True)
+    # define desired values
+    x_dot_d, y_dot_d, psi_dot_d = sp.symbols("x_dot_d y_dot_d psi_dot_d", real=True)
+    x_ddot_d, y_ddot_d, psi_ddot_d = sp.symbols(
+        "x_ddot_d y_ddot_d psi_ddot_d", real=True
+    )
+
+    k1, k2 = sp.symbols("k_1 k_2", real=True)
+    k_vec = sp.Matrix([k1, k2])
+    k_diag = sp.diag(k1, k2)
+
+    # inputs
+    i_in, delta_in = sp.symbols("i_in delta_in")
+    u = sp.Matrix([i_in, delta_in])
+
+    # Make state vectors
+    z_dot = sp.Matrix([x_dot, psi_dot, y_dot])
+    z_ddot = sp.Matrix([x_ddot, psi_ddot, y_ddot])
+    z_dot_d = sp.Matrix([x_dot_d, psi_dot_d, y_dot_d])
+    z_ddot_d = sp.Matrix([x_ddot_d, psi_ddot_d, y_ddot_d])
+
+    # Make the theta vector
+    theta = sp.Matrix([m, j_z, k, c_rr, c_af, c_s, c_d])
+
+    # Mass matrix
+    M = sp.Matrix([[m, 0, 0], [0, j_z, 0], [0, 0, m]])
+
+    # Dynamics matrix z_ddot = D(z, u, theta)
+    D = sp.Matrix(
+        [
+            [k / m * i_in - c_rr / m * x_dot + y_dot * psi_dot],
+            [
+                -(c_d * l) / (j_z * x_dot) * y_dot
+                - (c_s * l**2) / (j_z * x_dot) * psi_dot
+                + (c_af * l) / (j_z) * delta_in
+            ],
+            [
+                -(c_s * y_dot) / (m * x_dot)
+                - (l * c_d) / (m * x_dot) * (psi_dot)
+                + c_af / m * delta_in
+                - x_dot * psi_dot
+            ],
+        ]
+    )
+
+    # split up to F and G st m*z_ddot = F(s,theta) + G(u,theta)
+    D_m = M @ D  # D_m is M * z_ddot = D_m
+    # sp.pprint(D_m)
+
+    G_u = D_m.jacobian(u)
+    G_u.simplify()
+    # print(f"G_u:\n")
+    # sp.pprint(G_u)
+
+    G = G_u @ u
+    # print(f"G:\n")
+    # sp.pprint(G)
+
+    F = D_m - G
+    F.simplify()
+
+    # make sure that D_m = F + Gu
+    check1 = D_m - (F + G)
+    assert check1.simplify() == None
+
+    # get B and A st G = B * A * u
+    A = sp.diag(k, c_af)
+    # print(f"A:\n")
+    # sp.pprint(A)
+    # W_a_vec = (A @ sp.ones(2, 1)).jacobian(theta)
+    # print(f"W_a_vec:\n")
+    # sp.pprint(W_a_vec)
+    B = G_u @ sp.Inverse(A)
+    B.simplify()
+    B_bar = B[:2, :]
+    # sp.pprint(B_bar)
+
+    # check that G = B * A * u
+    check2 = G - B @ A @ u
+    assert check2.simplify() == None
+
+    W_m = (M @ z_ddot_d).jacobian(theta)
+    # print(f"W_m:\n")
+    # sp.pprint(W_m)
+    W_m.simplify()
+    W_f = F.jacobian(theta)
+    W_f.simplify()
+    W_g = G.jacobian(theta)
+    W_g.simplify()
+
+    # define controller regressor
+    W_m_bar = W_m[:2, :]
+    W_f_bar = W_f[:2, :]
+    W_c = W_m_bar - W_f_bar
+    # sp.pprint(W_c)
+
+    # define the controller
+    delta_z_dot = z_dot - z_dot_d
+    delta_z_dot_bar = delta_z_dot[:2, :]
+    C = sp.Inverse(A) @ sp.Inverse(B_bar) @ W_c @ theta - k_diag @ delta_z_dot_bar
+    C.simplify()
+    # sp.pprint(C)
+
+    # check the controlled dynamics by substituting C into the dynamics
+    print(f"Controlled Dynamics:\n")
+    controlled_dynamics = D_m.subs(zip(u, C)) - M @ z_ddot_d
+    controlled_dynamics.simplify()
+    sp.pprint(controlled_dynamics[:2, :])
+
+    C_func = sp.lambdify(
+        [z_ddot_d, z_dot_d, z_dot, theta, k_vec], C, "numpy", dummify=False
+    )
+
+    # MAKE W_z FUNCTION ########################################
+    p = theta.shape[0]  # should be 7
+    delta_theta = sp.Matrix([sp.symbols(f"Delta-theta{i}") for i in range(p)])
+    theta_hat = sp.Matrix([sp.symbols(f"theta-hat{i}") for i in range(p)])
+
+    W_delta = (
+        A.subs(zip(theta, delta_theta))
+        @ sp.Inverse(A.subs(zip(theta, theta_hat)))
+        @ W_c
+        @ theta_hat
+    )
+
+    W_delta = W_delta.jacobian(delta_theta)
+
+    W_delta.simplify()
+    # print(f"W_delta:\n")
+    # sp.pprint(W_delta)
+
+    W_z = W_c - W_delta
+    W_z.simplify()
+    W_z = W_z.subs(zip(theta_hat, theta))
+    # print(f"W_z:\n")
+    # sp.pprint(W_z)
+
+    W_z_func = sp.lambdify([z_ddot_d, z_dot, theta], W_z, "numpy", dummify=False)
+
+    test_m = sp.diag(*theta)
+    test_m_func = sp.lambdify([self, theta], test_m, "numpy", dummify=True)
+
+    # print(f"Test M:\n")
+    # sp.pprint(test_m_func(0, [1, 2, 3, 4, 5, 6, 7]))
+
+    return C_func, W_z_func
 
 
-def eval_control(self):
-    # calculate the control inputs and return as a numpy array
-    k1 = self.k1
-    k2 = self.k2
-    x_dot = self.z_dot[0]
-    psi_dot = self.z_dot[1]
-    y_dot = self.z_dot[2]
-    x_dot_d = self.z_dot_d[0]
-    psi_dot_d = self.z_dot_d[1]
-    x_ddot_d = self.z_ddot_d[0]
-    psi_ddot_d = self.z_ddot_d[1]
-    m = self.theta_h[0]
-    j_z = self.theta_h[1]
-    k = self.theta_h[2]
-    c_rr = self.theta_h[3]
-    c_af = self.theta_h[4]
-    c_s = self.theta_h[5]
-    c_d = self.theta_h[6]
-    l = self.l
+if __name__ == "__main__":
 
-    C = np.zeros(2)
-    C[0] = -k1*(x_dot-x_dot_d)+(c_rr*x_dot+m*x_ddot_d-m*psi_dot*y_dot)/k
-    C[1] = -k2*(psi_dot-psi_dot_d)+(j_z*psi_ddot_d +
-                                    (l*(c_d*y_dot+c_s*l*psi_dot))/x_dot)/(c_af*l)
+    class emptyClass:
+        pass
 
-    self.C = C
+    self = emptyClass()
+    self.l = 0.17
+    C_func, W_z_func = create_C_Wz(self)
