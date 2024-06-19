@@ -15,6 +15,10 @@ def init_ref_signals(self):
     self.ref_v = lambdify(t, ref_v, "numpy")
     self.ref_v_dot = lambdify(t, diff(ref_v, t), "numpy")
 
+    # make CONSTANT reference values
+    self.ref_v = lambdify(t, Array([2.5, 0.3, 0]), "numpy")
+    self.ref_v_dot = lambdify(t, Array([0, 0, 0]), "numpy")
+
 
 def update_t(self, setInit=False):
     sec, nsec = self.get_clock().now().seconds_nanoseconds()

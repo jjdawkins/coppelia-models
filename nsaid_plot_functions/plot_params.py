@@ -33,6 +33,7 @@ def init_param_plot(self):
     # set tight layout
     plt.tight_layout()
     self.fig_param.canvas.draw()
+    plt.pause(1e-4)
 
 
 def plot_params(self):

@@ -16,11 +16,11 @@ def main(args=None):
 
     while rclpy.ok():
         i += 1
-        if i % 10 == 0:
-            # print the parameter estimates
-            for i in range(nsaid_est.p):
-                print(f"{nsaid_est.theta_h[i]:.2f}", end=" ")
-            print()
+        # if i % 10 == 0:
+        #     # print the parameter estimates
+        #     for i in range(nsaid_est.p):
+        #         print(f"{nsaid_est.theta_h[i]:.2f}", end=" ")
+        #     print()
 
         # Process any pending events and callbacks
         rclpy.spin_once(nsaid_est)

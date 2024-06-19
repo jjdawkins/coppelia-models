@@ -50,7 +50,7 @@ def run_loop(self):
     )
 
     # send the control inputs # CHANGE TO CONTROL WHEEL SPEED ####################
-    self.send_cmd_vel(2.0, self.C[1, 0])
+    self.send_cmd_vel(self.C[0, 0], self.C[1, 0])
 
     # publish the estimated parameters
     msg = Float32MultiArray()
@@ -58,3 +58,17 @@ def run_loop(self):
     msg.data = [self.t, *self.theta_h]
     # then publish the message
     self.est_param_pub.publish(msg)
+
+    # publish the reference signals
+    msg = Float32MultiArray()
+    # first add time to the message
+    msg.data = [self.t, *self.z_dot_d]
+    # then publish the message
+    self.ref_vel_pub.publish(msg)
+
+    # publish actual velocity
+    msg = Float32MultiArray()
+    # first add time to the message
+    msg.data = [self.t, *self.z_dot]
+    # then publish the message
+    self.act_vel_pub.publish(msg)

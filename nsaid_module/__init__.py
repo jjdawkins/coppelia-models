@@ -48,6 +48,18 @@ class nsaidEstimation(Node):
             Float32MultiArray, self.est_param_topic, 10
         )
 
+        # publish the reference vel
+        self.ref_vel_topic = "/rover/ref_vel"
+        self.ref_vel_pub = self.create_publisher(
+            Float32MultiArray, self.ref_vel_topic, 10
+        )
+
+        # publish the actual vel
+        self.act_vel_topic = "/rover/act_vel"
+        self.act_vel_pub = self.create_publisher(
+            Float32MultiArray, self.act_vel_topic, 10
+        )
+
         # create timer that executes the run loop
         self.dt = 0.01
         self.timer = self.create_timer(self.dt, self.run_loop)

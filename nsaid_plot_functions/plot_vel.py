@@ -33,12 +33,13 @@ def init_vel_plot(self):
     # set tight layout
     plt.tight_layout()
     self.fig_vel.canvas.draw()
+    plt.pause(1e-4)
 
 
 def init_error_plot(self):
     # make axes
     self.fig_error, self.ax_error = plt.subplots(2, 1)
-    self.ax_error[0].set_title("Forward Velocity Error")
+    self.ax_error[0].set_title("Longitudinal Velocity Error")
     self.ax_error[0].set_xlabel("Time (s)")
     self.ax_error[0].set_ylabel("Velocity Error (m/s)")
     self.ax_error[1].set_title("Yaw Rate Error")
@@ -65,14 +66,15 @@ def init_error_plot(self):
     # set tight layout
     plt.tight_layout()
     self.fig_error.canvas.draw()
+    plt.pause(1e-4)
 
 
 def plot_vel(self):
     # plot the velocity values
-    self.vel_lines[0].set_data(self.t_hist[1:], self.z_dot_hist[0, 1:])
-    self.vel_lines[1].set_data(self.t_hist[1:], self.z_dot_d_hist[0, 1:])
-    self.vel_lines[2].set_data(self.t_hist[1:], self.z_dot_hist[1, 1:])
-    self.vel_lines[3].set_data(self.t_hist[1:], self.z_dot_d_hist[1, 1:])
+    self.vel_lines[0].set_data(self.t_z_dot_hist, self.z_dot_hist[0, :])
+    self.vel_lines[1].set_data(self.t_z_dot_d_hist, self.z_dot_d_hist[0, :])
+    self.vel_lines[2].set_data(self.t_z_dot_hist, self.z_dot_hist[1, :])
+    self.vel_lines[3].set_data(self.t_z_dot_d_hist, self.z_dot_d_hist[1, :])
 
     # update the plot
     self.ax_vel[0].relim()
@@ -84,12 +86,13 @@ def plot_vel(self):
 
 
 def plot_error(self):
+
     # plot the error values
     self.error_lines[0].set_data(
-        self.t_hist[1:], self.z_dot_hist[0, 1:] - self.z_dot_d_hist[0, 1:]
+        self.t_hist, self.z_dot_hist[0, :] - self.z_dot_d_hist[0, :]
     )
     self.error_lines[1].set_data(
-        self.t_hist[1:], self.z_dot_hist[1, 1:] - self.z_dot_d_hist[1, 1:]
+        self.t_hist, self.z_dot_hist[1, :] - self.z_dot_d_hist[1, :]
     )
 
     # update the plot
@@ -99,16 +102,3 @@ def plot_error(self):
     self.ax_error[1].autoscale_view()
 
     self.fig_error.canvas.draw()
-
-
-def update_histories(self):
-    # update the HISTORIES
-    self.z_dot_hist = np.append(self.z_dot_hist, np.reshape(self.z_dot, (3, 1)), axis=1)
-    self.z_dot_d_hist = np.append(
-        self.z_dot_d_hist, np.reshape(self.z_dot_d, (3, 1)), axis=1
-    )
-    self.t_hist = np.append(self.t_hist, self.t)
-
-    self.theta_h_hist = np.append(
-        self.theta_h_hist, np.reshape(self.theta_h, (self.p, 1)), axis=1
-    )
