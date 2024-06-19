@@ -3,9 +3,11 @@ import matplotlib.pyplot as plt
 
 
 def init_param_plot(self):
-    # make axes
     param_names = ["m", "Jz", "k", "c_rr", "c_af", "c_s", "c_d"]
-    self.fig_param, self.ax_param = plt.subplots(len(param_names), 1, figsize=(6, 12))
+    self.p = len(param_names)
+
+    # make axes
+    self.fig_param, self.ax_param = plt.subplots(self.p, 1, figsize=(6, 12))
     self.fig_param.suptitle("Parameter Estimates")
 
     # label each axis
@@ -15,13 +17,7 @@ def init_param_plot(self):
         self.ax_param[i].set_ylabel("Value")
         # grid on
         self.ax_param[i].grid()
-        # put line at +- 10% of initial value
-        self.ax_param[i].axhline(
-            self.theta_0[i] * 1.1, color="black", lw=1, linestyle="--"
-        )
-        self.ax_param[i].axhline(
-            self.theta_0[i] * 0.9, color="black", lw=1, linestyle="--"
-        )
+
     # create list to hold the lines
     self.param_lines = []
 

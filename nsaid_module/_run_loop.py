@@ -54,5 +54,7 @@ def run_loop(self):
 
     # publish the estimated parameters
     msg = Float32MultiArray()
-    msg.data = self.theta_h
+    # first add time to the message
+    msg.data = [self.t, *self.theta_h]
+    # then publish the message
     self.est_param_pub.publish(msg)
