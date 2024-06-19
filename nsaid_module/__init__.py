@@ -7,6 +7,7 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
+from std_msgs.msg import Float32MultiArray
 
 
 class nsaidEstimation(Node):
@@ -39,6 +40,12 @@ class nsaidEstimation(Node):
         self.t_odom = self.t
         self.odom_sub = self.create_subscription(
             Odometry, "/rover/mocap/odom", self.odom_callback, 10
+        )
+
+        # publish the est_param topic (shold be list of floats)
+        self.est_param_topic = "/rover/est_param"
+        self.est_param_pub = self.create_publisher(
+            Float32MultiArray, self.est_param_topic, 10
         )
 
         # create timer that executes the run loop (NOT USED IF RUN ONCE)

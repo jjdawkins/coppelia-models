@@ -1,4 +1,5 @@
 import numpy as np
+from std_msgs.msg import Float32MultiArray
 
 
 def run_loop(self):
@@ -48,5 +49,10 @@ def run_loop(self):
         self.z_ddot_d, self.z_dot_d, self.z_dot, self.theta_h, self.k_vec
     )
 
-    # send the control inputs # CHANGE TO CONTROL WHEEL SPEED
+    # send the control inputs # CHANGE TO CONTROL WHEEL SPEED ####################
     self.send_cmd_vel(2.0, self.C[1, 0])
+
+    # publish the estimated parameters
+    msg = Float32MultiArray()
+    msg.data = self.theta_h
+    self.est_param_pub.publish(msg)
