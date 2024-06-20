@@ -24,4 +24,4 @@ def init_gains(self):
     self.k_vec = np.array([self.k1, self.k2])
 
     # make our adaptive gains  m    J_z    k     c_rr c_af c_s  c_d
-    self.gamma = 10 * np.diag([1e-3, 1e-3, 5e-3, 5e-3, 5, 5, 5])
+    self.gamma = 10 * np.diag([1e-2, 1e-2, 1e-3, 1e-3, 5, 5, 5])

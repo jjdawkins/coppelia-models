@@ -50,7 +50,7 @@ def run_loop(self):
     )
 
     # send the control inputs # CHANGE TO CONTROL WHEEL SPEED ####################
-    self.send_cmd_vel(self.C[0, 0], self.C[1, 0])
+    self.send_cmd_vel(2.0, self.C[1, 0])
 
     # publish the estimated parameters
     msg = Float32MultiArray()

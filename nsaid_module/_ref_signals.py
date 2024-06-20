@@ -30,8 +30,11 @@ def init_ref_signals(self):
     theta = atan2(dot_y, dot_x)
     theta_dot = diff(theta, t)
 
-    self.ref_v = lambdify(t, Array([2, theta_dot]), "numpy")
-    self.ref_v_dot = lambdify(t, Array([0, diff(theta_dot, t)]), "numpy")
+    ref_v = Array([2.3 + 0.1 * sin(0.3 * t), theta_dot, 0])
+    ref_v = Array([2.0, theta_dot, 0])
+
+    self.ref_v = lambdify(t, ref_v, "numpy")
+    self.ref_v_dot = lambdify(t, diff(ref_v, t), "numpy")
 
 
 def update_t(self, setInit=False):
