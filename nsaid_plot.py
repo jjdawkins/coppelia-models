@@ -3,6 +3,7 @@ import rclpy
 import matplotlib.pyplot as plt
 import time
 from std_msgs.msg import Float32MultiArray
+from geometry_msgs.msg import Twist
 import numpy as np
 
 
@@ -14,6 +15,7 @@ class nsaidPlot(Node):
         plot_vel,
         plot_error,
     )
+    from nsaid_plot_functions.plot_inputs import init_input_plot, plot_input
 
     def __init__(self):
         super().__init__("nsaid_plot")
@@ -28,10 +30,12 @@ class nsaidPlot(Node):
         self.t_hist = np.array([])
         self.t_z_dot_hist = np.array([])
         self.t_z_dot_d_hist = np.array([])
+        self.t_u_hist = np.array([])
 
         self.init_param_plot()
         self.init_vel_plot()
         # self.init_error_plot()
+        self.init_input_plot()
 
         # subscribe to the ref_vel topic
         self.ref_vel_topic = "/rover/ref_vel"
@@ -45,10 +49,22 @@ class nsaidPlot(Node):
             Float32MultiArray, self.act_vel_topic, self.act_vel_callback, 10
         )
 
+        # subscribe to cmd_vel topic
+        self.cmd_vel_topic = "/rover/cmd_vel"
+        self.cmd_vel_sub = self.create_subscription(
+            Twist, self.cmd_vel_topic, self.cmd_vel_callback, 10
+        )
+
         # create timer that executes the run loop
         self.dt = 0.4  # SPEED UP OR SLOW DOWN THE PLOT
         self.timer = self.create_timer(self.dt, self.run_loop)
         self.ii = 0
+
+        self.u = np.array([[0], [0]])  # 2x1 array
+
+    def cmd_vel_callback(self, msg):
+        # just save the input, add it later with another callback
+        self.u = np.array([[msg.linear.x], [msg.angular.z]])
 
     def ref_vel_callback(self, msg):
         n = len(msg.data) - 1
@@ -77,8 +93,10 @@ class nsaidPlot(Node):
         theta_h = np.reshape(msg.data[1:], (n, -1))
         if self.t_hist.shape[0] == 1:
             self.theta_h_hist = np.array(theta_h)
+            self.u_hist = np.array(self.u)
         else:
             self.theta_h_hist = np.append(self.theta_h_hist, theta_h, axis=1)
+            self.u_hist = np.append(self.u_hist, self.u, axis=1)
 
     def run_loop(self):
         if self.t_hist.shape[0] > 0:
@@ -88,6 +106,7 @@ class nsaidPlot(Node):
                 self.plot_vel()
             elif self.ii == 2:
                 # self.plot_error()
+                self.plot_input()
                 pass
             self.ii = (self.ii + 1) % 3
             plt.pause(1e-4)
