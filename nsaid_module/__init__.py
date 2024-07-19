@@ -8,13 +8,14 @@ from geometry_msgs.msg import Twist
 from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 from std_msgs.msg import Float32MultiArray
+from sensor_msgs.msg import Imu
 
 
 class nsaidEstimation(Node):
     # import methods from other files
     from ._ref_signals import update_t, get_z_d, update_z_d, init_ref_signals
     from ._run_loop import run_loop
-    from ._sub_pub import odom_callback, send_cmd_vel
+    from ._sub_pub import odom_callback, send_cmd_vel, imu_callback
     from ._set_gains import init_gains
     from ._eval_mat import create_C_Wz
 
@@ -22,6 +23,8 @@ class nsaidEstimation(Node):
         super().__init__("nsaid_estimation")
         print("nsaid_estimation node started")
 
+        self.last_psi_dot=0.0
+        
         # call init functions
 
         self.init_gains()
@@ -40,6 +43,11 @@ class nsaidEstimation(Node):
         self.t_odom = self.t
         self.odom_sub = self.create_subscription(
             Odometry, "/rover/mocap/odom", self.odom_callback, 10
+        )
+
+        # subscript to the imu 
+        self.imu_sub = self.create_subscription(
+            Imu, "/rover/imu", self.imu_callback,10
         )
 
         # publish the est_param topic (shold be list of floats)

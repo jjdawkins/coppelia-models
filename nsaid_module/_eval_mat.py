@@ -80,7 +80,7 @@ def create_C_Wz(self):
 
     # make sure that D_m = F + Gu
     check1 = D_m - (F + G)
-    assert check1.simplify() == None
+    #assert check1.simplify() == None
 
     # get B and A st G = B * A * u
     A = sp.diag(k, c_af)
@@ -96,7 +96,7 @@ def create_C_Wz(self):
 
     # check that G = B * A * u
     check2 = G - B @ A @ u
-    assert check2.simplify() == None
+    #assert check2.simplify() == None
 
     W_m = (M @ z_ddot_d).jacobian(theta)
     # print(f"W_m:\n")

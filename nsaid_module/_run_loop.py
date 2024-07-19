@@ -11,13 +11,13 @@ def run_loop(self):
 
         self.dot_n = (self.dot_n + 1) % len(self.twirl)
         print(f"No messages received! {self.twirl[self.dot_n] + ' '*8} ", end="\r")
-        self.send_cmd_vel(2.0, 0.0)
+        self.send_cmd_vel(1.0, 0.0)
         return
 
     # make sure speed is not zero
     if self.z_dot[0] < 0.1:
         print(f"Speed too low! {self.z_dot[0]:.2f} m/s", end="\r")
-        self.send_cmd_vel(2.0, 0.0)
+        self.send_cmd_vel(1.0, 0.0)
         return
 
     # print(f"t: {self.t:.2f}")
@@ -50,7 +50,7 @@ def run_loop(self):
     )
 
     # send the control inputs # CHANGE TO CONTROL WHEEL SPEED ####################
-    self.send_cmd_vel(2.0, self.C[1, 0])
+    self.send_cmd_vel(self.C[0,0], self.C[1, 0])
 
     # publish the estimated parameters
     msg = Float32MultiArray()

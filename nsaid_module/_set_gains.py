@@ -8,8 +8,7 @@ def init_gains(self):
     # self.theta_0 = np.array([4.378, 0.0715, 3.0, 3.0, 12.0, 20.0, 5.0])
 
     #                         m       Jz    k   c_rr  c_af  c_s  c_d
-    self.theta_0 = np.array([4.378, 0.0715, 1.5, 1.0, 15.0, 30.0, 20.0])
-
+    self.theta_0 = np.array([4.378, 0.0715, 1.5, 1.0, 10.0, 30.0, 10.0])
     # make column vector of ESTIMATED (Hat) parameters
     self.theta_h = np.copy(self.theta_0)
 
@@ -20,8 +19,8 @@ def init_gains(self):
 
     # make our controller gains
     self.k1 = 1.0  # throttle gain
-    self.k2 = 0.1  # steering gain (0.05 worked)
+    self.k2 = 0.08  # steering gain (0.05 worked)
     self.k_vec = np.array([self.k1, self.k2])
 
     # make our adaptive gains  m    J_z    k     c_rr c_af c_s  c_d
-    self.gamma = 10 * np.diag([1e-2, 1e-2, 1e-3, 1e-3, 5, 5, 5])
+    self.gamma = 10 * np.diag([1e-2, 1e-2, 1e-3, 1e-3, 10, 10, 10])
