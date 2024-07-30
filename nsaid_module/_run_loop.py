@@ -3,6 +3,12 @@ from std_msgs.msg import Float32MultiArray
 
 
 def run_loop(self):
+    # default speed
+    default_speed = 1.0
+    # max speed = 1.5
+    max_speed = 1.5
+    min_speed = 0.5
+
     # update the time
     self.update_t()
 
@@ -17,7 +23,7 @@ def run_loop(self):
     # make sure speed is not zero
     if self.z_dot[0] < 0.1:
         print(f"Speed too low! {self.z_dot[0]:.2f} m/s", end="\r")
-        self.send_cmd_vel(1.0, 0.0)
+        self.send_cmd_vel(default_speed, 0.0)
         return
 
     # print(f"t: {self.t:.2f}")
@@ -49,8 +55,17 @@ def run_loop(self):
         self.z_ddot_d, self.z_dot_d, self.z_dot, self.theta_h, self.k_vec
     )
 
+    cmd_speed = self.C[0, 0]
+    if cmd_speed > max_speed:
+        cmd_speed = max_speed
+        print('Speed too high! Setting to max speed')
+    elif cmd_speed < min_speed:
+        cmd_speed = min_speed
+        print('Speed too low! Setting to min speed')
+
+
     # send the control inputs # CHANGE TO CONTROL WHEEL SPEED ####################
-    self.send_cmd_vel(self.C[0,0], self.C[1, 0])
+    self.send_cmd_vel(cmd_speed, self.C[1, 0])
 
     # publish the estimated parameters
     msg = Float32MultiArray()
