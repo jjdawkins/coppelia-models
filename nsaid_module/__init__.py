@@ -5,8 +5,6 @@ import time
 from sympy import Matrix, symbols, sin, lambdify, Array, diff
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
-from matplotlib.lines import Line2D
-import matplotlib.pyplot as plt
 from std_msgs.msg import Float32MultiArray
 from sensor_msgs.msg import Imu
 

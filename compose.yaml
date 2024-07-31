@@ -1,0 +1,38 @@
+services:
+  nsaid:
+    build: .
+    # run on network host
+    network_mode: "host"
+    # put in interactive mode
+    tty: true
+    volumes:
+      - .:/app
+    # run python script
+    command: watchmedo auto-restart --patterns="*.py" --recursive -- python3 nsaid_est.py
+
+
+  rover_iface:
+    build: .
+    # run on network host
+    network_mode: "host"
+    # put in interactive mode
+    tty: true
+    volumes:
+      - .:/app
+    # run python script
+    command: watchmedo auto-restart --patterns="*.py" --recursive -- python3 rover_interface.py
+  
+
+
+  # list:
+  #   build: .
+  #   # run on network host
+  #   network_mode: "host"
+  #   # put in interactive mode
+  #   tty: true
+  #   volumes:
+  #     - .:/app
+  #   # run python script
+  #   command: watchmedo auto-restart --patterns="*.py" --recursive -- ros2 topic list
+
+  
