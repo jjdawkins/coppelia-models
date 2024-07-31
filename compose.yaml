@@ -38,10 +38,10 @@ services:
     # set environment variable
     environment:
       - ROS_DOMAIN_ID=11
-      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      #- RMW_IMPLEMENTATION=rmw_fastrtps_cpp
     # source the ros2 env
     command: >
-      bash -c "source /opt/ros/jazzy/setup.bash &&
+      bash -c "source /opt/ros/jazzy/setup.bash && 
       watchmedo auto-restart --patterns='*.py' --recursive -- 
       ros2 topic list"
 
