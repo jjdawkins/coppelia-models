@@ -9,7 +9,7 @@ services:
       - .:/app
     # run python script
     command: >
-      bash -c "source /opt/ros/foxy/setup.bash &&
+      bash -c "source /opt/ros/jazzy/setup.bash &&
       watchmedo auto-restart --patterns='*.py' --recursive --
       python3 nsaid_est.py"
 
@@ -41,7 +41,7 @@ services:
       - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
     # source the ros2 env
     command: >
-      bash -c "source /opt/ros/foxy/setup.bash &&
+      bash -c "source /opt/ros/jazzy/setup.bash &&
       watchmedo auto-restart --patterns='*.py' --recursive -- 
       ros2 topic list"
 
