@@ -4,9 +4,9 @@ from std_msgs.msg import Float32MultiArray
 
 def run_loop(self):
     # default speed
-    default_speed = 1.0
+    default_speed = 0.5
     # max speed = 1.5
-    max_speed = 1.5
+    max_speed = 1.0
     min_speed = 0.5
 
     # update the time

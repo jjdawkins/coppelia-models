@@ -8,7 +8,7 @@ def init_gains(self):
     # self.theta_0 = np.array([4.378, 0.0715, 3.0, 3.0, 12.0, 20.0, 5.0])
 
     #                         m       Jz    k   c_rr  c_af  c_s  c_d
-    self.theta_0 = np.array([4.378, 0.0715, 1.5, 1.0, 10.0, 30.0, 10.0])
+    self.theta_0 = np.array([4.378, 0.0715, 0.1, 0.1, 20.0, 20.0, 13.0])
     # make column vector of ESTIMATED (Hat) parameters
     self.theta_h = np.copy(self.theta_0)
 
