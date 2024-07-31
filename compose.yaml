@@ -8,7 +8,10 @@ services:
     volumes:
       - .:/app
     # run python script
-    command: watchmedo auto-restart --patterns="*.py" --recursive -- python3 nsaid_est.py
+    command: >
+      bash -c "source /opt/ros/foxy/setup.bash &&
+      watchmedo auto-restart --patterns='*.py' --recursive --
+      python3 nsaid_est.py"
 
 
   rover_iface:
@@ -32,7 +35,14 @@ services:
     tty: true
     volumes:
       - .:/app
-    # run python script
-    command: watchmedo auto-restart --patterns="*.py" --recursive -- ros2 topic list
+    # set environment variable
+    environment:
+      - ROS_DOMAIN_ID=11
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+    # source the ros2 env
+    command: >
+      bash -c "source /opt/ros/foxy/setup.bash &&
+      watchmedo auto-restart --patterns='*.py' --recursive -- 
+      ros2 topic list"
 
   

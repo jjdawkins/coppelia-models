@@ -15,6 +15,7 @@ def main(args=None):
     t0 = time.time()
     i = 0
 
+
     while rclpy.ok():
         i += 1
         # if i % 10 == 0:
