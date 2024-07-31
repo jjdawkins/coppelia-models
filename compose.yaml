@@ -24,15 +24,16 @@ services:
   
 
 
-  # list:
-  #   build: .
-  #   # run on network host
-  #   network_mode: "host"
-  #   # put in interactive mode
-  #   tty: true
-  #   volumes:
-  #     - .:/app
-  #   # run python script
-  #   command: watchmedo auto-restart --patterns="*.py" --recursive -- ros2 topic list
+  list:
+    build: .
+    # run on network host
+    network_mode: "host"
+    # put in interactive mode
+    tty: true
+    priviliged: true
+    volumes:
+      - .:/app
+    # run python script
+    command: watchmedo auto-restart --patterns="*.py" --recursive -- ros2 topic list
 
   
