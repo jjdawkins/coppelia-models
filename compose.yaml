@@ -1,67 +1,67 @@
 services:
-  nsaid:
-    build: .
-    # run on network host
-    network_mode: "host"
-    # open all ros2 ports
+  # nsaid:
+  #   build: .
+  #   # run on network host
+  #   network_mode: "host"
+  #   # open all ros2 ports
 
 
-    # put in interactive mode
-    #tty: true
-    # allow typing in
-    #stdin_open: true
-    # set security options
-    security_opt:
-      - seccomp:unconfined
-    # set privileges
-    privileged: true
-    volumes:
-      - .:/app
-    # set environment variable
-    environment:
-      - ROS_DOMAIN_ID=11
-      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
-      - RMW_FASTRTPS_USE_QOS_FROM_XML=1
-      - FASTRTPS_DEFAULT_PROFILES_FILE=/app/fastdds.xml
-    # run python script
-    command: >
-      bash -c "source /opt/ros/jazzy/setup.bash &&
-      ros2 daemon stop &&
-      ros2 daemon start &&
-      source /opt/ros/jazzy/setup.bash &&
-      watchmedo auto-restart --patterns='*.py' --recursive --
-      python3 nsaid_est.py"
+  #   # put in interactive mode
+  #   #tty: true
+  #   # allow typing in
+  #   #stdin_open: true
+  #   # set security options
+  #   security_opt:
+  #     - seccomp:unconfined
+  #   # set privileges
+  #   privileged: true
+  #   volumes:
+  #     - .:/app
+  #   # set environment variable
+  #   environment:
+  #     - ROS_DOMAIN_ID=11
+  #     - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+  #     - RMW_FASTRTPS_USE_QOS_FROM_XML=1
+  #     - FASTRTPS_DEFAULT_PROFILES_FILE=/app/fastdds.xml
+  #   # run python script
+  #   command: >
+  #     bash -c "source /opt/ros/jazzy/setup.bash &&
+  #     ros2 daemon stop &&
+  #     ros2 daemon start &&
+  #     source /opt/ros/jazzy/setup.bash &&
+  #     watchmedo auto-restart --patterns='*.py' --recursive --
+  #     python3 nsaid_est.py"
 
 
-  rover_iface:
-    build: .
-    # run on network host
-    network_mode: "host"
-    # open all ros2 ports
+  # rover_iface:
+  #   build: .
+  #   # run on network host
+  #   network_mode: "host"
+  #   # open all ros2 ports
 
-    # put in interactive mode
-    #tty: true
-    # allow typing in
-    #stdin_open: true
-    # set security options
-    security_opt:
-      - seccomp:unconfined
-    # set privileges
-    privileged: true
-    volumes:
-      - .:/app
-    # set environment variable
-    environment:
-      - ROS_DOMAIN_ID=11
-      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
-      - RMW_FASTRTPS_USE_QOS_FROM_XML=1
-      - FASTRTPS_DEFAULT_PROFILES_FILE=/app/fastdds.xml
-    # run python script
-    command: >
-      bash -c "ros2 daemon stop &&
-      ros2 daemon start &&
-      watchmedo auto-restart --patterns='*.py' --recursive -- 
-      python3 rover_interface.py"
+  #   # put in interactive mode
+  #   #tty: true
+  #   # allow typing in
+  #   #stdin_open: true
+  #   # set security options
+  #   security_opt:
+  #     - seccomp:unconfined
+  #   # set privileges
+  #   privileged: true
+  #   volumes:
+  #     - .:/app
+  #   # set environment variable
+  #   environment:
+  #     - ROS_DOMAIN_ID=11
+  #     - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+  #     - RMW_FASTRTPS_USE_QOS_FROM_XML=1
+  #     - FASTRTPS_DEFAULT_PROFILES_FILE=/app/fastdds.xml
+  #   # run python script
+  #   command: >
+  #     bash -c "ros2 daemon stop &&
+  #     ros2 daemon start &&
+  #     watchmedo auto-restart --patterns='*.py' --recursive -- 
+  #     python3 rover_interface.py"
   
 
 
@@ -69,8 +69,9 @@ services:
     build: .
     # run on network host
     network_mode: "host"
-    # open all ros2 ports
-
+    
+    pid: host
+    ipc: host
 
     # put in interactive mode
     tty: true
@@ -88,14 +89,45 @@ services:
       - ROS_DOMAIN_ID=11
       - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
       - RMW_FASTRTPS_USE_QOS_FROM_XML=1
-      - FASTRTPS_DEFAULT_PROFILES_FILE=/app/fastdds.xml
-    # source the ros2 env
-    # command: >
-    #   bash -c "source /opt/ros/jazzy/setup.bash && 
-    #   ros2 daemon stop &&
-    #   ros2 daemon start &&
-    #   source /opt/ros/jazzy/setup.bash &&
-    #   watchmedo auto-restart --patterns='*.py' --recursive -- 
-    #   ros2 topic list"
 
+    # source the ros2 env
+    command: >
+      bash -c "source /opt/ros/jazzy/setup.bash && 
+      ros2 daemon stop &&
+      sleep 1 &&
+      ros2 daemon start &&
+      source /opt/ros/jazzy/setup.bash &&
+      ros2 run demo_nodes_py listener"
   
+
+  talk:
+    build: .
+    # run on network host
+    network_mode: "host"
+    pid: host
+    ipc: host
+    # put in interactive mode
+    tty: true
+    # allow typing in
+    stdin_open: true
+    # set security options
+    security_opt:
+      - seccomp:unconfined
+    # set privileges
+    privileged: true
+    volumes:
+      - .:/app
+    # set environment variable
+    environment:
+      - ROS_DOMAIN_ID=11
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      - RMW_FASTRTPS_USE_QOS_FROM_XML=1
+
+    # source the ros2 env
+    command: >
+      bash -c "source /opt/ros/jazzy/setup.bash && 
+      ros2 daemon stop &&
+      sleep 1 &&
+      ros2 daemon start &&
+      source /opt/ros/jazzy/setup.bash &&
+      ros2 run demo_nodes_py talker"
