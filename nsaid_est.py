@@ -14,28 +14,32 @@ def main(args=None):
     t0 = time.time()
     i = 0
 
+    try:
+        while rclpy.ok():
+            i += 1
+            # if i % 10 == 0:
+            #     # print the parameter estimates
+            #     for i in range(nsaid_est.p):
+            #         print(f"{nsaid_est.theta_h[i]:.2f}", end=" ")
+            #     print()
 
-    while rclpy.ok():
-        i += 1
-        # if i % 10 == 0:
-        #     # print the parameter estimates
-        #     for i in range(nsaid_est.p):
-        #         print(f"{nsaid_est.theta_h[i]:.2f}", end=" ")
-        #     print()
+            # Process any pending events and callbacks
+            rclpy.spin_once(nsaid_est)
 
-        # Process any pending events and callbacks
-        rclpy.spin_once(nsaid_est)
+            # Sleep for a short duration to control the loop rate
+            while time.time() - t0 < 0.01:
+                pass
+            t0 = time.time()
 
-        # Sleep for a short duration to control the loop rate
-        while time.time() - t0 < 0.01:
-            pass
-        t0 = time.time()
+    except KeyboardInterrupt:
+        print("Keyboard Interrupt")
 
-    # Clean up and destroy the node
-    nsaidEstimation.destroy_node()
+    finally: 
+        # Clean up and destroy the node
+        nsaidEstimation.destroy_node()
 
-    # Shut down the ROS 2 Python client library
-    rclpy.shutdown()
+        # Shut down the ROS 2 Python client library
+        rclpy.shutdown()
 
 
 if __name__ == "__main__":

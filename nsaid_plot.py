@@ -5,6 +5,7 @@ import time
 from std_msgs.msg import Float32MultiArray
 from geometry_msgs.msg import Twist
 import numpy as np
+from time import sleep
 
 
 class nsaidPlot(Node):
@@ -99,17 +100,8 @@ class nsaidPlot(Node):
             self.u_hist = np.append(self.u_hist, self.u, axis=1)
 
     def run_loop(self):
-        if self.t_hist.shape[0] > 0:
-            if self.ii == 0:
-                self.plot_params()
-            elif self.ii == 1:
-                self.plot_vel()
-            elif self.ii == 2:
-                # self.plot_error()
-                self.plot_input()
-                pass
-            self.ii = (self.ii + 1) % 3
-            plt.pause(1e-4)
+        pass
+
 
 
 def main(args=None):
@@ -120,14 +112,33 @@ def main(args=None):
 
     plt.ion()
 
-    # spin the node
-    rclpy.spin(nsaid_plot)
+    try:
+        while rclpy.ok():
+            # this updates the plot data callbacks
+            rclpy.spin_once(nsaid_plot, timeout_sec=0.1)
 
-    # Clean up and destroy the node
-    nsaidPlot.destroy_node(nsaid_plot)
+            # update the plots
+            if nsaid_plot.t_hist.shape[0] > 0:
+                if nsaid_plot.ii == 0:
+                    nsaid_plot.plot_params()
+                elif nsaid_plot.ii == 1:
+                    nsaid_plot.plot_vel()
+                elif nsaid_plot.ii == 2:
+                    # nsaid_plot.plot_error()
+                    nsaid_plot.plot_input()
+                    pass
+                nsaid_plot.ii = (nsaid_plot.ii + 1) % 3
+                plt.pause(1e-4)
 
-    # Shut down the ROS 2 Python client library
-    rclpy.shutdown()
+    except KeyboardInterrupt:
+        print("Keyboard Interrupt")
+
+    finally:
+        # Clean up and destroy the node
+        nsaidPlot.destroy_node(nsaid_plot)
+
+        # Shut down the ROS 2 Python client library
+        rclpy.shutdown()
 
 
 if __name__ == "__main__":
