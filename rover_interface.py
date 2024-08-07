@@ -12,6 +12,8 @@ from sensor_msgs.msg import Imu, Joy
 from std_msgs.msg import Float32MultiArray
 from geometry_msgs.msg import Twist
 
+import serial
+
 IDLE = -1
 READY = 0
 TAKEOFF = 1
@@ -33,10 +35,10 @@ class roverInterface(rclpy.node.Node):
     def __init__(self):
         super().__init__('drone_interface_node')
 
-        print('NEW CODE')
+    #    print('NEW CODE')
 
         self.max_str = 0.35
-        self.max_spd = 2.0
+        self.max_spd = 5.0
         self.str_cmd = 0.0
         self.spd_cmd = 0.0
 
@@ -50,8 +52,10 @@ class roverInterface(rclpy.node.Node):
 
         self.mode = IDLE
 
+        #self.ser = serial.Serial('/dev/ttyUSB0', baudrate=115200, timeout=1)
+
     #    self.declare_parameter('my_parameter', 'world')
-#        self.mav_conn = mavutil.mavlink_connection("/dev/ttyUSB0",baud=115200,input=False)
+        self.mav_conn = mavutil.mavlink_connection("/dev/ttyUSB0",baud=115200,input=False)
 
         self.imu_pub = self.create_publisher(Imu,'imu',10)
 
@@ -59,15 +63,15 @@ class roverInterface(rclpy.node.Node):
         self.joy_sub = self.create_subscription(Joy,'joy',self.joy_callback,1)
         #self.mocap_sub = self.create_subscription(Odometry,'mocap/odom',self.mocap_callback,1)
 
-        self.timer = self.create_timer(0.05, self.send_loop)
+        self.timer = self.create_timer(0.01, self.send_loop)
 
-        #ßself.read_thread = threading.Thread(target=self.read_loop,daemon=True)
-        #self.read_thread.start()
+        self.read_thread = threading.Thread(target=self.read_loop,daemon=True)
+        self.read_thread.start()
         self.init_time = self.get_clock().now()
         self.last_rcvd = self.get_clock().now()
         self.imu_time = self.get_clock().now()
 
-        print("NEW CODE")
+    #    print("NEW CODE")
     # def mocap_callback(self,msg):
     #     self.pos_x = self.pose.pose.position.x
     #     self.pos_y = self.pose.pose.position.y
@@ -96,20 +100,20 @@ class roverInterface(rclpy.node.Node):
             pass
 
 
-        # self.mav_conn.mav.rc_channels_override_send(
-        #     target_system=1,  # Replace with the target system ID
-        #     target_component=1,  # Replace with the target component ID
-        #     chan1_raw=str_pwm,
-        #     chan2_raw=spd_pwm,
-        #     chan3_raw=0,
-        #     chan4_raw=0,
-        #     chan5_raw=0,  # You can set these to 0 if not used
-        #     chan6_raw=0,
-        #     chan7_raw=0,
-        #     chan8_raw=0
-        # )
+        self.mav_conn.mav.rc_channels_override_send(
+              target_system=1,  # Replace with the target system ID
+              target_component=1,  # Replace with the target component ID
+              chan1_raw=str_pwm,
+              chan2_raw=spd_pwm,
+              chan3_raw=0,
+              chan4_raw=0,
+              chan5_raw=0,  # You can set these to 0 if not used
+              chan6_raw=0,
+              chan7_raw=0,
+              chan8_raw=0
+         )
         
-        # self.mav_conn.mav.manual_setpoint_send(time_ms,roll_cmd,pitch_cmd,yaw_cmd,thrust_cmd, mode_cmd,0)            
+        #self.mav_conn.mav.manual_setpoint_send(time_ms,roll_cmd,pitch_cmd,yaw_cmd,thrust_cmd, mode_cmd,0)            
 
     def joy_callback(self,msg):
 
@@ -163,14 +167,17 @@ class roverInterface(rclpy.node.Node):
         
         while(True):
 
-            #msg = self.mav_conn.recv_match(blocking=True)
+            #msg = self.ser.readline()
+            msg = self.mav_conn.recv_match(blocking=True)
 
+            #print(msg)
             if(msg is None):
                 pass
             elif(msg.get_type() == 'HEARTBEAT'):
                 pass
             elif(msg.get_type() == 'SCALED_IMU'):
-               # print((1e-6)*(self.get_clock().now()-self.imu_time).nanoseconds)
+                #print((1e-6)*(self.get_clock().now()-self.imu_time).nanoseconds)
+                self.imu_time = self.get_clock().now()
                 
                 imu_msg = Imu()
                 imu_msg.header.stamp = self.get_clock().now().to_msg()
@@ -182,8 +189,7 @@ class roverInterface(rclpy.node.Node):
                 imu_msg.angular_velocity.z = msg.zgyro*1e-3
 
                 self.imu_pub.publish(imu_msg)                                
-                self.imu_time = self.get_clock().now()
-            time.sleep(0.001)
+            time.sleep(0.0001)
 
 
 def main():

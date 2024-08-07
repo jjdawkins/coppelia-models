@@ -4,10 +4,10 @@ from std_msgs.msg import Float32MultiArray
 
 def run_loop(self):
     # default speed
-    default_speed = 0.5
+    default_speed = 0.6
     # max speed = 1.5
     max_speed = 1.0
-    min_speed = 0.5
+    min_speed = 0.6
 
     # update the time
     self.update_t()
@@ -56,12 +56,13 @@ def run_loop(self):
     )
 
     cmd_speed = self.C[0, 0]
+
+    print(cmd_speed)
+
     if cmd_speed > max_speed:
         cmd_speed = max_speed
-        print('Speed too high! Setting to max speed')
     elif cmd_speed < min_speed:
         cmd_speed = min_speed
-        print('Speed too low! Setting to min speed')
 
 
     # send the control inputs # CHANGE TO CONTROL WHEEL SPEED ####################
