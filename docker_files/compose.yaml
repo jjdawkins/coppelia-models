@@ -71,11 +71,15 @@ services:
 
   list:
     build: .
+    container_name: ros2_listener
     # run on network host
-    network_mode: "host"
-    
+    network_mode: host
     pid: host
     ipc: host
+
+    environment:
+      - ROS_DOMAIN_ID=11
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 
     # put in interactive mode
     tty: true
@@ -88,21 +92,14 @@ services:
     privileged: true
     cap_add:
       - NET_ADMIN
-    # disable ipv6
-    sysctls:
-      - net.ipv6.conf.all.disable_ipv6=1
     volumes:
       - .:/app
     # set environment variable
-    environment:
-      - ROS_DOMAIN_ID=11
-      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 
-    # source the ros2 env
+    # source the ros2 env and then continually list topics
     command: >
-      bash -c "source /opt/ros/jazzy/setup.bash && 
-      ros2 daemon stop &&
-      sleep 1 &&
-      ros2 daemon start &&
-      source /opt/ros/jazzy/setup.bash &&
-      ros2 topic list"
+      bash -c "./ros_entrypoint.sh &&
+      while true; do
+        ros2 topic list;
+        sleep 1;
+      done"
