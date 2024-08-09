@@ -16,13 +16,25 @@ def init_ref_signals(self):
     # self.ref_v_dot = lambdify(t, diff(ref_v, t), "numpy")
 
     # # make CONSTANT reference values
-    t = symbols("t")
-    self.ref_v = lambdify(t, Array([1.1, 1.1, 0]), "numpy")
-    self.ref_v_dot = lambdify(t, Array([0, 0, 0]), "numpy")
+    # t = symbols("t")
+    # self.ref_v = lambdify(t, Array([1.1, 1.0, 0]), "numpy")
+    # self.ref_v_dot = lambdify(t, Array([0, 0, 0]), "numpy")
+
+    ################# make sin reference values
+    t = symbols('t')
+    ref_v = Array([
+      1.1 + 0.1 * sin(t),
+      0.8 + 0.2 * sin (0.9 *t ),
+      0
+      ])
+
+    self.ref_v = lambdify(t, ref_v, "numpy")
+    self.ref_v_dot = lambdify(t, diff(ref_v, t), "numpy")
+
 
     # make figure 8 reference values
     # t = symbols("t")
-    # speed = 0.4
+    # speed = 0.8
     # x = 1.2 * sin(speed * 2 * t)
     # y = 4 * sin(speed * t)
     # dot_x = diff(x, t)
@@ -32,7 +44,7 @@ def init_ref_signals(self):
     # theta_dot = diff(theta, t)
 
     # ref_v = Array([2.3 + 0.1 * sin(0.3 * t), theta_dot, 0])
-    # ref_v = Array([2.0, theta_dot, 0])
+    # ref_v = Array([1.1, theta_dot, 0])
 
     # self.ref_v = lambdify(t, ref_v, "numpy")
     # self.ref_v_dot = lambdify(t, diff(ref_v, t), "numpy")

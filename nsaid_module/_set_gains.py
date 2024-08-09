@@ -11,7 +11,7 @@ def init_gains(self):
     # self.theta_0 = np.array([4.378, 0.0715, 7,    8,    20.0, 20.0, 13.0])
 
     #                         m       Jz     k    c_rr  c_af  c_s   c_d
-    self.theta_0 = np.array([4.378, 0.0715,  5, 1e-3, 20.0, 20.0, 13.0])
+    self.theta_0 = np.array([4.378, 0.0715,  3,    1, 20.0, 20.0, 13.0])
 
     # make column vector of ESTIMATED (Hat) parameters
     self.theta_h = np.copy(self.theta_0)
@@ -31,7 +31,7 @@ def init_gains(self):
 
 
     # make our adaptive gains  m      J_z     k     c_rr c_af c_s  c_d
-    self.gamma = 10 * np.diag([1e-2, 1.0,  5.0,  1e-1, 10, 10, 10])
+    self.gamma = 10 * np.diag([1e-2, 1e-2,   5e-1,  1e-1, 10, 10, 10])
 
     # make our adaptive gains  m  J_z    k       c_rr c_af c_s  c_d
     # self.gamma = 1.0 * np.diag([0, 0, 0.2, 0.2, 0.0, 0, 0])
