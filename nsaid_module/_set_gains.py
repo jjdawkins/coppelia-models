@@ -26,8 +26,12 @@ def init_gains(self):
     self.k2 = 0.5  # steering gain (0.05 worked)
     self.k_vec = np.array([self.k1, self.k2])
 
-    # make our adaptive gains  m    J_z    k     c_rr c_af c_s  c_d
-    self.gamma = 10 * np.diag([1e-2, 1e-2,  15,  1e-1, 10, 10, 10])
+
+
+
+
+    # make our adaptive gains  m      J_z     k     c_rr c_af c_s  c_d
+    self.gamma = 10 * np.diag([1e-2, 1.0,  5.0,  1e-1, 10, 10, 10])
 
     # make our adaptive gains  m  J_z    k       c_rr c_af c_s  c_d
     # self.gamma = 1.0 * np.diag([0, 0, 0.2, 0.2, 0.0, 0, 0])
