@@ -17,7 +17,7 @@ def init_ref_signals(self):
 
     # # make CONSTANT reference values
     t = symbols("t")
-    self.ref_v = lambdify(t, Array([1.0, 1.2, 0]), "numpy")
+    self.ref_v = lambdify(t, Array([1.1, 1.1, 0]), "numpy")
     self.ref_v_dot = lambdify(t, Array([0, 0, 0]), "numpy")
 
     # make figure 8 reference values

@@ -16,7 +16,7 @@ def run_loop(self):
     max_current = 1.0
     min_current = -1.0
 
-    # update the time
+    # update the timedescription.bag"
     self.update_t()
 
     # make sure that messages are being received
@@ -65,8 +65,7 @@ def run_loop(self):
     cmd_current = self.C[0, 0]
     cmd_steer = self.C[1, 0]
 
-    print(f"CMD Current: {cmd_current:0.2f} - x_dot: {self.z_dot[0]:0.2f}")
-    print(f"CMD Steer: {cmd_steer:0.2f} - psi_dot: {self.z_dot[1]:0.2f}")
+    print(f"CMD Current: {cmd_current:0.2f} - Speed: {self.z_dot[0]:0.2f}")
 
     cmd_current = saturate(cmd_current, min_current, max_current)
     cmd_steer = saturate(cmd_steer, -1.0, 1.0)

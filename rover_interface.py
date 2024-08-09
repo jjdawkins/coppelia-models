@@ -60,11 +60,11 @@ class roverInterface(rclpy.node.Node):
         )
 
         # Setup publishers and subscribers
-        self.imu_pub = self.create_publisher(Imu, "imu", 10)
+        self.imu_pub = self.create_publisher(Imu, "/rover/imu", 10)
         self.set_sub = self.create_subscription(
-            Twist, "cmd_vel", self.cmd_vel_callback, 1
+            Twist, "/rover/cmd_vel", self.cmd_vel_callback, 1
         )
-        self.joy_sub = self.create_subscription(Joy, "joy", self.joy_callback, 1)
+        self.joy_sub = self.create_subscription(Joy, "/rover/joy", self.joy_callback, 1)
         # Uncomment if using motion capture data: self.mocap_sub = self.create_subscription(Odometry, 'mocap/odom', self.mocap_callback, 1)
 
         # Timer for periodic tasks
@@ -91,9 +91,12 @@ class roverInterface(rclpy.node.Node):
         spd_pwm = 1500
 
         # only send commands if the cmd has been received recently
-        if dt.nanoseconds * 1e-6 < 500:
+        if dt.nanoseconds * 1e-9 < 0.4:
             str_pwm = int(self.str_cmd * 500 + 1500)  # STEERING from 0 to 1
             spd_pwm = int(self.spd_cmd * 500 + 1500)
+            #print(f"sending {spd_pwm}")
+
+
 
         # Send the commands via MAVLink
         self.mav_conn.mav.rc_channels_override_send(
@@ -104,6 +107,7 @@ class roverInterface(rclpy.node.Node):
             chan3_raw=0,
             chan4_raw=0,
             chan5_raw=0,
+            chan6_raw=0,
             chan7_raw=0,
             chan8_raw=0,
         )
@@ -143,8 +147,8 @@ class roverInterface(rclpy.node.Node):
         self.last_rcvd = self.get_clock().now()
 
         # Normalize and constrain commands
-        # self.str_cmd = msg.angular.z / self.max_str
-        # self.spd_cmd = msg.linear.x / self.max_spd
+        self.str_cmd = msg.angular.z
+        self.spd_cmd = msg.linear.x
         # self.str_cmd = saturate(self.str_cmd, -self.max_str, self.max_str)
         # self.spd_cmd = saturate(self.spd_cmd, -self.max_spd, self.max_spd)
 

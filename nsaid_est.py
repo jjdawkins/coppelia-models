@@ -27,7 +27,7 @@ def main(args=None):
             rclpy.spin_once(nsaid_est)
 
             # Sleep for a short duration to control the loop rate
-            while time.time() - t0 < 0.01:
+            while time.time() - t0 < 0.02:
                 pass
             t0 = time.time()
 
