@@ -16,8 +16,8 @@ def init_ref_signals(self):
     # self.ref_v_dot = lambdify(t, diff(ref_v, t), "numpy")
 
     # # make CONSTANT reference values
-    t =symbols("t")
-    self.ref_v = lambdify(t, Array([0.8, 1.3, 0]), "numpy")
+    t = symbols("t")
+    self.ref_v = lambdify(t, Array([1.0, 1.2, 0]), "numpy")
     self.ref_v_dot = lambdify(t, Array([0, 0, 0]), "numpy")
 
     # make figure 8 reference values
@@ -34,8 +34,8 @@ def init_ref_signals(self):
     # ref_v = Array([2.3 + 0.1 * sin(0.3 * t), theta_dot, 0])
     # ref_v = Array([2.0, theta_dot, 0])
 
-    #self.ref_v = lambdify(t, ref_v, "numpy")
-    #self.ref_v_dot = lambdify(t, diff(ref_v, t), "numpy")
+    # self.ref_v = lambdify(t, ref_v, "numpy")
+    # self.ref_v_dot = lambdify(t, diff(ref_v, t), "numpy")
 
 
 def update_t(self, setInit=False):
