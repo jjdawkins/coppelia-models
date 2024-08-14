@@ -2,11 +2,19 @@ import numpy as np
 from std_msgs.msg import Float32MultiArray
 
 
+def saturate(val, min, max):
+    if val > max:
+        val = max
+    if val < min:
+        val = min
+    return val
+
+
 def run_loop(self):
-    # default speed
-    default_speed = 0.85
-    max_speed = 1.5
-    min_speed = 0.7
+    # default current
+    default_current = 1.0
+    max_current = 1.0
+    min_current = -1.0
 
     # update the time
     self.update_t()
@@ -22,7 +30,7 @@ def run_loop(self):
     # make sure speed is not zero
     if self.z_dot[0] < 0.1:
         print(f"Speed too low! {self.z_dot[0]:.2f} m/s", end="\r")
-        self.send_cmd_vel(default_speed, 0.0)
+        self.send_cmd_vel(default_current, 0.0)
         return
 
     # print(f"t: {self.t:.2f}")
@@ -54,17 +62,17 @@ def run_loop(self):
         self.z_ddot_d, self.z_dot_d, self.z_dot, self.theta_h, self.k_vec
     )
 
-    cmd_speed = self.C[0, 0]
+    cmd_current = self.C[0, 0]
+    cmd_steer = self.C[1, 0]
 
-    print(f"CMD: {cmd_speed:0.2f} - ACTUAL: {self.z_dot[0]:0.2f}")
+    print(f"CMD Current: {cmd_current:0.2f} - x_dot: {self.z_dot[0]:0.2f}")
+    print(f"CMD Steer: {cmd_steer:0.2f} - psi_dot: {self.z_dot[1]:0.2f}")
 
-    if cmd_speed > max_speed:
-        cmd_speed = max_speed
-    elif cmd_speed < min_speed:
-        cmd_speed = min_speed
+    cmd_current = saturate(cmd_current, min_current, max_current)
+    cmd_steer = saturate(cmd_steer, -1.0, 1.0)
 
-    # send the control inputs # CHANGE TO CONTROL WHEEL SPEED ####################
-    self.send_cmd_vel(cmd_speed, self.C[1, 0])
+    # send the control inputs # CHANGE TO CONTROL WHEEL current ####################
+    self.send_cmd_vel(cmd_current, cmd_steer)
 
     # publish the estimated parameters
     msg = Float32MultiArray()

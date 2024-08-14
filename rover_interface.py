@@ -24,6 +24,7 @@ MANUAL = 4
 LAND = 5
 ERROR = 6
 
+
 # Helper function to constrain values within a range
 def saturate(val, min, max):
     if val > max:
@@ -32,14 +33,15 @@ def saturate(val, min, max):
         val = min
     return val
 
+
 class roverInterface(rclpy.node.Node):
     def __init__(self):
         # Initialize the node
-        super().__init__('drone_interface_node')
+        super().__init__("drone_interface_node")
 
         # Initialize parameters
         self.max_str = 0.35
-        self.max_spd = 5.0
+        self.max_spd = 15.0
         self.str_cmd = 0.0
         self.spd_cmd = 0.0
 
@@ -48,17 +50,21 @@ class roverInterface(rclpy.node.Node):
         self.yaw_joy = 0.0
         self.thrust_joy = 0.0
 
-        self.flying = False        
+        self.flying = False
         self.mode = IDLE
 
         # Setup MAVLink connection
         # Uncomment if using serial connection: self.ser = serial.Serial('/dev/ttyUSB0', baudrate=115200, timeout=1)
-        self.mav_conn = mavutil.mavlink_connection("/dev/ttyUSB0", baud=115200, input=False)
+        self.mav_conn = mavutil.mavlink_connection(
+            "/dev/ttyUSB0", baud=115200, input=False
+        )
 
         # Setup publishers and subscribers
-        self.imu_pub = self.create_publisher(Imu, 'imu', 10)
-        self.set_sub = self.create_subscription(Twist, 'cmd_vel', self.cmd_vel_callback, 1)
-        self.joy_sub = self.create_subscription(Joy, 'joy', self.joy_callback, 1)
+        self.imu_pub = self.create_publisher(Imu, "imu", 10)
+        self.set_sub = self.create_subscription(
+            Twist, "cmd_vel", self.cmd_vel_callback, 1
+        )
+        self.joy_sub = self.create_subscription(Joy, "joy", self.joy_callback, 1)
         # Uncomment if using motion capture data: self.mocap_sub = self.create_subscription(Odometry, 'mocap/odom', self.mocap_callback, 1)
 
         # Timer for periodic tasks
@@ -77,7 +83,7 @@ class roverInterface(rclpy.node.Node):
     def send_loop(self):
         time_from_boot = self.get_clock().now() - self.init_time
         time = int(time_from_boot.nanoseconds * 1e-9)
-        
+
         dt = self.get_clock().now() - self.last_rcvd
 
         # Calculate PWM values based on commands
@@ -86,21 +92,21 @@ class roverInterface(rclpy.node.Node):
 
         # only send commands if the cmd has been received recently
         if dt.nanoseconds * 1e-6 < 500:
-            str_pwm = int(self.str_cmd * 600 + 1500)
+            str_pwm = int(self.str_cmd * 500 + 1500)  # STEERING from 0 to 1
             spd_pwm = int(self.spd_cmd * 500 + 1500)
 
         # Send the commands via MAVLink
         self.mav_conn.mav.rc_channels_override_send(
-              target_system=1,  # Replace with the target system ID
-              target_component=1,  # Replace with the target component ID
-              chan1_raw=str_pwm,
-              chan2_raw=spd_pwm,
-              chan3_raw=0,
-              chan4_raw=0,
-              chan5_raw=0,  
-              chan7_raw=0,
-              chan8_raw=0
-         )
+            target_system=1,  # Replace with the target system ID
+            target_component=1,  # Replace with the target component ID
+            chan1_raw=str_pwm,
+            chan2_raw=spd_pwm,
+            chan3_raw=0,
+            chan4_raw=0,
+            chan5_raw=0,
+            chan7_raw=0,
+            chan8_raw=0,
+        )
 
     # Function to handle joystick inputs
     def joy_callback(self, msg):
@@ -111,25 +117,25 @@ class roverInterface(rclpy.node.Node):
         self.thrust_joy = saturate(self.thrust_joy, 0.0, 1.0)
 
         # Handle joystick button presses
-        if msg.buttons[0]:     # A Button
+        if msg.buttons[0]:  # A Button
             pass
 
-        if msg.buttons[1]:     # B Button
+        if msg.buttons[1]:  # B Button
             pass
 
-        if msg.buttons[2]:     # X Button
+        if msg.buttons[2]:  # X Button
             if self.flying:
                 self.mode = LAND
 
-        if msg.buttons[3]:     # Y Button
+        if msg.buttons[3]:  # Y Button
             if not self.flying:
                 self.mode = TAKEOFF
 
-        if msg.buttons[4]:     # L Button
+        if msg.buttons[4]:  # L Button
             if self.flying:
                 self.mode = AUTO
 
-        if msg.buttons[5]:     # R Button
+        if msg.buttons[5]:  # R Button
             self.mode = MANUAL
 
     # Function to handle Twist messages
@@ -137,10 +143,10 @@ class roverInterface(rclpy.node.Node):
         self.last_rcvd = self.get_clock().now()
 
         # Normalize and constrain commands
-        self.str_cmd = msg.angular.z / self.max_str
-        self.spd_cmd = msg.linear.x / self.max_spd
-        self.str_cmd = saturate(self.str_cmd, -self.max_str, self.max_str)
-        self.spd_cmd = saturate(self.spd_cmd, -self.max_spd, self.max_spd)
+        # self.str_cmd = msg.angular.z / self.max_str
+        # self.spd_cmd = msg.linear.x / self.max_spd
+        # self.str_cmd = saturate(self.str_cmd, -self.max_str, self.max_str)
+        # self.spd_cmd = saturate(self.spd_cmd, -self.max_spd, self.max_spd)
 
     # Function to read MAVLink messages
     def read_loop(self):
@@ -150,12 +156,12 @@ class roverInterface(rclpy.node.Node):
 
             if msg is None:
                 pass
-            elif msg.get_type() == 'HEARTBEAT':
+            elif msg.get_type() == "HEARTBEAT":
                 pass
-            elif msg.get_type() == 'SCALED_IMU':
+            elif msg.get_type() == "SCALED_IMU":
                 # Process IMU data
                 self.imu_time = self.get_clock().now()
-                
+
                 imu_msg = Imu()
                 imu_msg.header.stamp = self.get_clock().now().to_msg()
                 imu_msg.linear_acceleration.x = msg.xacc * 1e-3
@@ -168,10 +174,12 @@ class roverInterface(rclpy.node.Node):
                 self.imu_pub.publish(imu_msg)
             time.sleep(0.0001)
 
+
 def main():
     rclpy.init()
     node = roverInterface()
     rclpy.spin(node)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
