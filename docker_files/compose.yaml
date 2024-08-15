@@ -71,7 +71,7 @@ services:
 
   list:
     build: .
-    container_name: ros2_listener
+    container_name: ros2_bagger
     # run on network host
     network_mode: host
     pid: host
@@ -99,7 +99,4 @@ services:
     # source the ros2 env and then continually list topics
     command: >
       bash -c "./ros_entrypoint.sh &&
-      while true; do
-        ros2 topic list;
-        sleep 1;
-      done"
+      
