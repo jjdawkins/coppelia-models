@@ -1,7 +1,7 @@
 % Specify the path to the ROS2 bag file
-bagFilePath = 'rosbag2_2024_08_14-13_16_33/rosbag2_2024_08_14-13_16_33_0.db3';
+%bagFilePath = 'rosbag2_2024_08_14-13_16_33/rosbag2_2024_08_14-13_16_33_0.db3';
 %bagFilePath = 'rosbag2_2024_08_14-13_48_27/rosbag2_2024_08_14-13_48_27_0.db3';
-%bagFilePath = 'rosbag2_2024_08_14-13_53_16/rosbag2_2024_08_14-13_53_16_0.db3';
+bagFilePath = 'rosbag2_2024_08_14-13_53_16/rosbag2_2024_08_14-13_53_16_0.db3';
 
 % Load the ROS2 bag file
 bag = ros2bagreader(bagFilePath);
@@ -91,7 +91,7 @@ for i=1:3
   plot( time, act_vel_data(i,:),  'LineWidth', 1.5)
   plot(time, ref_vel_data(i,:), 'LineWidth', 1.5)
   grid on
-  legend('Reference Velocity', 'Actual Velocity')
+  legend('Actual Velocity', 'Reference Velocity', 'Location', 'Best')
   xlabel('Time (s)', label_options{:})
   ylabel(velocity_units(i), label_options{:})
 end

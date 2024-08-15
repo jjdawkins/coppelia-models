@@ -151,8 +151,8 @@ def create_C_Wz(self):
     W_z = W_c - W_delta
     W_z.simplify()
     W_z = W_z.subs(zip(theta_hat, theta))
-    # print(f"W_z:\n")
-    # sp.pprint(W_z)
+    print(f"W_z:\n")
+    sp.pprint(W_z)
 
     W_z_func = sp.lambdify([z_ddot_d, z_dot, theta], W_z, "numpy", dummify=False)
 
