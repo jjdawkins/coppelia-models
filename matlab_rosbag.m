@@ -1,7 +1,18 @@
-% Specify the path to the ROS2 bag file
-%bagFilePath = 'rosbag2_2024_08_14-13_16_33/rosbag2_2024_08_14-13_16_33_0.db3';
-%bagFilePath = 'rosbag2_2024_08_14-13_48_27/rosbag2_2024_08_14-13_48_27_0.db3';
-bagFilePath = 'rosbag2_2024_08_14-13_53_16/rosbag2_2024_08_14-13_53_16_0.db3';
+% get all rosbags in rosbag folder
+folders = dir('rosbags');
+for i = 1:length(folders)
+    folder = folders(i);
+    if folder.isdir && ~strcmp(folder.name, '.') && ~strcmp(folder.name, '..')
+        bagFiles = dir(fullfile('rosbags', folder.name, '*.db3'));
+        for j = 1:length(bagFiles)
+            bagFilePath = fullfile('rosbags', folder.name, bagFiles(j).name);
+            visualize_rosbag(bagFilePath);
+        end
+    end
+end
+
+
+function out = visualize_rosbag(bagFilePath)
 
 % Load the ROS2 bag file
 bag = ros2bagreader(bagFilePath);
@@ -147,3 +158,5 @@ end
 
 % save in rosbag folder
 saveas(f, replace(bagFilePath, '.db3', '_cmd_vel.png'))
+
+end
