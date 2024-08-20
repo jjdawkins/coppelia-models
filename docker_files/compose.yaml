@@ -1,6 +1,5 @@
 # set version 3
-version: '3'
-
+version: "3"
 
 services:
   # nsaid:
@@ -8,7 +7,6 @@ services:
   #   # run on network host
   #   network_mode: "host"
   #   # open all ros2 ports
-
 
   #   # put in interactive mode
   #   #tty: true
@@ -35,7 +33,6 @@ services:
   #     source /opt/ros/jazzy/setup.bash &&
   #     watchmedo auto-restart --patterns='*.py' --recursive --
   #     python3 nsaid_est.py"
-
 
   # rover_iface:
   #   build: .
@@ -64,14 +61,11 @@ services:
   #   command: >
   #     bash -c "ros2 daemon stop &&
   #     ros2 daemon start &&
-  #     watchmedo auto-restart --patterns='*.py' --recursive -- 
+  #     watchmedo auto-restart --patterns='*.py' --recursive --
   #     python3 rover_interface.py"
-  
 
-
-  list:
+  bagger:
     build: .
-    container_name: ros2_bagger
     # run on network host
     network_mode: host
     pid: host
@@ -80,7 +74,6 @@ services:
     environment:
       - ROS_DOMAIN_ID=11
       - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
-
     # put in interactive mode
     tty: true
     # allow typing in
@@ -94,9 +87,8 @@ services:
       - NET_ADMIN
     volumes:
       - .:/app
-    # set environment variable
 
-    # source the ros2 env and then continually list topics
     command: >
-      bash -c "./ros_entrypoint.sh &&
-      
+      bash -c "source /opt/ros/humble/setup.bash &&
+      cd /app &&
+      ./rosbag_command.sh"
