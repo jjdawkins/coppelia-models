@@ -21,16 +21,17 @@ def init_ref_signals(self):
     # self.ref_v_dot = lambdify(t, Array([0, 0, 0]), "numpy")
 
     ################# make sin reference values
-    t = symbols('t')
-    ref_v = Array([
-      1.1 + 0.1 * sin(t),
-      0.8 + 0.2 * sin (0.9 *t ),
-      0
-      ])
+    t = symbols("t")
+    ref_v = Array(
+        [
+            1.1,  # + 0.05 * sin(0.71*t),  #Throttle
+            1.0,  # + 0.1 * sin (0.43 *t ), # Steering
+            0,
+        ]
+    )
 
     self.ref_v = lambdify(t, ref_v, "numpy")
     self.ref_v_dot = lambdify(t, diff(ref_v, t), "numpy")
-
 
     # make figure 8 reference values
     # t = symbols("t")

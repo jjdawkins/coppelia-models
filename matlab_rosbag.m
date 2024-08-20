@@ -1,14 +1,14 @@
 % get all rosbags in rosbag folder
 folders = dir('rosbags');
 for i = 1:length(folders)
-    folder = folders(i);
-    if folder.isdir && ~strcmp(folder.name, '.') && ~strcmp(folder.name, '..')
-        bagFiles = dir(fullfile('rosbags', folder.name, '*.db3'));
-        for j = 1:length(bagFiles)
-            bagFilePath = fullfile('rosbags', folder.name, bagFiles(j).name);
-            visualize_rosbag(bagFilePath);
-        end
+  folder = folders(i);
+  if folder.isdir && ~strcmp(folder.name, '.') && ~strcmp(folder.name, '..')
+    bagFiles = dir(fullfile('rosbags', folder.name, '*.db3'));
+    for j = 1:length(bagFiles)
+      bagFilePath = fullfile('rosbags', folder.name, bagFiles(j).name)
+      visualize_rosbag(bagFilePath);
     end
+  end
 end
 
 
