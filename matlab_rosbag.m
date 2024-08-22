@@ -53,7 +53,7 @@ f = figure
 f.Position = [68 145 950 1121];
 tiledlayout(n_p,1)
 % make overall title for the plot
-sgtitle('NSAID Ground Vehicel Controller Estimated Parameters', title_options{:})
+sgtitle('NSAID Ground Vehicle Controller Estimated Parameters', title_options{:})
 for i = 1:n_p
   nexttile
   plot(time, data(i,:), "LineWidth", 2)
@@ -94,6 +94,7 @@ velocity_titles = ["$\dot{x}$", "$\dot{\psi}$", "$\dot{y}$"];
 velocity_units = ["m/s", "rad/s", "m/s"];
 % PLOT THE REFERENCE AND ACTUAL VELOCITIES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 f=figure
+f.Position = [68 145 950 1121];
 tiledlayout(3,1)
 for i=1:3
   nexttile
@@ -116,6 +117,7 @@ delta_v = ref_vel_data - act_vel_data;
 delta_v_titles = ["$\Delta \dot{x}$", "$\Delta \dot{\psi}$"];
 
 f=figure
+f.Position = [68 145 950 1121];
 tiledlayout(2,1)
 for i=1:2
   nexttile
