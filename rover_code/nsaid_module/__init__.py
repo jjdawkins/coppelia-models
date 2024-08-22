@@ -21,8 +21,8 @@ class nsaidEstimation(Node):
         super().__init__("nsaid_estimation")
         print("nsaid_estimation node started")
 
-        self.last_psi_dot=0.0
-        
+        self.last_psi_dot = 0.0
+
         # call init functions
 
         self.init_gains()
@@ -43,9 +43,9 @@ class nsaidEstimation(Node):
             Odometry, "/rover/mocap/odom", self.odom_callback, 10
         )
 
-        # subscript to the imu 
+        # subscript to the imu
         self.imu_sub = self.create_subscription(
-            Imu, "/rover/imu", self.imu_callback,10
+            Imu, "/rover/imu", self.imu_callback, 10
         )
 
         # publish the est_param topic (shold be list of floats)
