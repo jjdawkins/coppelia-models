@@ -1,0 +1,27 @@
+# set version 3
+version: "3"
+
+services:
+  controller:
+    build: .
+    # run on network host
+    network_mode: host
+    pid: host
+    ipc: host
+
+    environment:
+      - ROS_DOMAIN_ID=11
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+    # set security options
+    security_opt:
+      - seccomp:unconfined
+    # set privileges
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - .:/app
+    command: >
+      bash -c "source /opt/ros/humble/setup.bash &&
+      cd /app &&
+      python3 nsaid_est.py"
