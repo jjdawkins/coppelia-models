@@ -29,4 +29,4 @@ services:
     command: >
       bash -c "source /opt/ros/humble/setup.bash &&
       cd /app &&
-      wathmedo auto-restart --pattern '*.py' --recursive python3 nsai_est.py"
+      wathmedo auto-restart --pattern '*.py' --recursive python3 nsaid_est.py"
