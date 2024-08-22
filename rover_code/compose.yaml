@@ -21,7 +21,12 @@ services:
       - NET_ADMIN
     volumes:
       - .:/app
+
+    # show output in terminal
+    tty: true
+
+    # run with wathmedo
     command: >
       bash -c "source /opt/ros/humble/setup.bash &&
       cd /app &&
-      python3 nsaid_est.py"
+      wathmedo auto-restart --pattern '*.py' --recursive python3 nsai_est.py"

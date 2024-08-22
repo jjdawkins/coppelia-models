@@ -2,7 +2,7 @@
 version: "3"
 
 services:
-  controller:
+  interface:
     build: .
     # run on network host
     network_mode: host

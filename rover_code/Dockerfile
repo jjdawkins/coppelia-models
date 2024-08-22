@@ -18,7 +18,7 @@ RUN sudo apt-get install -y ros-humble-ros2bag ros-humble-rosbag2-storage-defaul
 
 # install sympy, numpy, and matplotlib pymavlink and pyserial
 RUN sudo apt-get install -y python3-pip
-RUN pip3 install sympy numpy matplotlib pymavlink pyserial
+RUN pip3 install sympy numpy matplotlib pymavlink pyserial watchdog
 
 WORKDIR /app
 
