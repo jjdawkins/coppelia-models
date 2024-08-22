@@ -67,7 +67,7 @@ class nsaidEstimation(Node):
         )
 
         # create timer that executes the run loop
-        self.dt = 0.01
+        self.dt = 0.02
         self.timer = self.create_timer(self.dt, self.run_loop)
 
         # get starting values

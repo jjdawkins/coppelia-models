@@ -26,17 +26,12 @@ def main(args=None):
             # Process any pending events and callbacks
             rclpy.spin_once(nsaid_est)
 
-            # Sleep for a short duration to control the loop rate
-            while time.time() - t0 < 0.02:
-                pass
-            t0 = time.time()
-
     except KeyboardInterrupt:
         print("Keyboard Interrupt")
 
     finally: 
         # Clean up and destroy the node
-        nsaidEstimation.destroy_node()
+        nsaid_est.destroy_node()
 
         # Shut down the ROS 2 Python client library
         rclpy.shutdown()
