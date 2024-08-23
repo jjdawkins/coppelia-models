@@ -30,17 +30,17 @@ topic = '/rover/est_param';
 % Read the messages from the selected topic
 msgs = readMessages(select(bag, 'Topic', topic));
 
-time = []; %this will be a 1xn
-data = []; % this will be a 7xn
+est_param_time = []; %this will be a 1xn
+est_param_data = []; % this will be a 7xn
 
 % loop over each message and extract the data
 for i = 1:length(msgs)
-  time = [time, msgs{i}.data(1)];
-  data = [data, msgs{i}.data(2:end)];
+  est_param_time = [est_param_time, msgs{i}.est_param_data(1)];
+  est_param_data = [est_param_data, msgs{i}.data(2:end)];
 end
 
 close all;
-n_p = size(data, 1)
+n_p = size(est_param_data, 1)
 param_names = ["$m$", "$j_z$", "$k_t$", "$c_{rr}$", "$c_{\alpha f}$", "$c_{\Sigma}$", "$c_{\Delta}$"];
 param_units = ["kg", "kg m^2", "N m", "N m s", "N/rad", "N m", "N m"];
 
@@ -56,7 +56,7 @@ tiledlayout(n_p,1)
 sgtitle('NSAID Ground Vehicle Controller Estimated Parameters', title_options{:})
 for i = 1:n_p
   nexttile
-  plot(time, data(i,:), "LineWidth", 2)
+  plot(est_param_time, est_param_data(i,:), "LineWidth", 2)
   title(param_names(i), title_options{:})
   grid on
   xlabel('Time (s)', label_options{:})
@@ -160,5 +160,9 @@ end
 
 % save in rosbag folder
 saveas(f, replace(bagFilePath, '.db3', '_cmd_vel.png'))
+
+
+% save the .mat with est_param_time, es
+
 
 end
