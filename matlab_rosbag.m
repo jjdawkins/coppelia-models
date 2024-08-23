@@ -1,12 +1,19 @@
 % get all rosbags in rosbag folder
 folders = dir('rosbags');
+desired_plots = 1;
+
+plot_count = 0;
 for i = 1:length(folders)
+  if plot_count >= desired_plots
+    break
+  end
   folder = folders(i);
   if folder.isdir && ~strcmp(folder.name, '.') && ~strcmp(folder.name, '..')
     bagFiles = dir(fullfile('rosbags', folder.name, '*.db3'));
     for j = 1:length(bagFiles)
       bagFilePath = fullfile('rosbags', folder.name, bagFiles(j).name)
       visualize_rosbag(bagFilePath);
+      plot_count = plot_count +1;
     end
   end
 end
@@ -24,6 +31,52 @@ topics = bag.AvailableTopics
 amperage_scale = 15;
 turn_scale = 0.35;
 
+% First plot the /rover/mocap/odom topic
+topic = '/rover/mocap/odom';
+msgs = readMessages(select(bag, 'Topic', topic));
+
+msgs{1}.pose.pose.position
+
+positions = []; % this will be a 3xn
+
+for i = 1:length(msgs)
+  new_position = [msgs{i}.pose.pose.position.x, msgs{i}.pose.pose.position.y, msgs{i}.pose.pose.position.z];
+  positions = [positions, new_position'];
+end
+
+f = figure
+f.Position = [68 145 950 1121];
+position_titles = ["$x$", "$y$", "$z$"];
+tiledlayout(3,1)
+sgtitle('NSAID Ground Vehicle Position', 'Interpreter', 'latex', 'FontSize', 18)
+for i = 1:3
+  nexttile
+  plot(positions(i,:), "LineWidth", 2)
+  title(position_titles(i), 'Interpreter', 'latex', 'FontSize', 14)
+  grid on
+  xlabel('Time (s)', 'Interpreter', 'latex', 'FontSize', 14)
+end
+
+% now plot velocities
+f = figure
+f.Position = [68 145 950 1121];
+velocities = diff(positions, 1, 2);
+velocity_titles = ["$\dot{x}$", "$\dot{y}$", "$\dot{z}$"];
+tiledlayout(3,1)
+sgtitle('NSAID Ground Vehicle Velocity', 'Interpreter', 'latex', 'FontSize', 18)
+for i = 1:3
+  nexttile
+  plot(velocities(i,:), "LineWidth", 2)
+  title(velocity_titles(i), 'Interpreter', 'latex', 'FontSize', 14)
+  grid on
+  xlabel('Time (s)', 'Interpreter', 'latex', 'FontSize', 14)
+end
+
+
+return
+
+
+
 % Select the topic you want to plot
 topic = '/rover/est_param';
 
@@ -35,7 +88,7 @@ est_param_data = []; % this will be a 7xn
 
 % loop over each message and extract the data
 for i = 1:length(msgs)
-  est_param_time = [est_param_time, msgs{i}.est_param_data(1)];
+  est_param_time = [est_param_time, msgs{i}.data(1)];
   est_param_data = [est_param_data, msgs{i}.data(2:end)];
 end
 
@@ -85,9 +138,13 @@ for i = 1:length(act_vel_msgs)
 end
 
 % run a low pass filter on actual velocity
-for i=1:3
-  act_vel_data(i,:) = filter(ones(1,10)/10, 1, act_vel_data(i,:));
-end
+filter_order = 10;
+filter_kernel = ones(1, filter_order) / filter_order;
+
+% for i = 1:3
+%   act_vel_data(i,:) = conv(act_vel_data(i,:), filter_kernel, 'same');
+% end
+
 
 
 velocity_titles = ["$\dot{x}$", "$\dot{\psi}$", "$\dot{y}$"];
@@ -100,12 +157,13 @@ for i=1:3
   nexttile
   hold on
   title(velocity_titles(i), title_options{:})
-  plot( time, act_vel_data(i,:),  'LineWidth', 1.5)
-  plot(time, ref_vel_data(i,:), 'LineWidth', 1.5)
+  plot(act_vel_time, act_vel_data(i,:),  'LineWidth', 1.5)
+  plot(ref_vel_time, ref_vel_data(i,:), 'LineWidth', 1.5)
   grid on
   legend('Actual Velocity', 'Reference Velocity', 'Location', 'Best')
   xlabel('Time (s)', label_options{:})
   ylabel(velocity_units(i), label_options{:})
+  ylim([0.5, 1.5])
 end
 
 % save in rosbag folder
@@ -122,12 +180,14 @@ tiledlayout(2,1)
 for i=1:2
   nexttile
   hold on
-  plot( time, delta_v(i,:),  'LineWidth', 1.5)
+  plot( ref_vel_time, delta_v(i,:),  'LineWidth', 1.5)
   title(delta_v_titles(i), title_options{:})
   yline(0, 'LineWidth', 1.5)
   grid on
   xlabel('Time (s)', label_options{:})
   ylabel(velocity_units(i), label_options{:})
+  % ylim  = [-0.5, 0.5]
+  ylim([-0.5, 0.5])
 end
 
 % save in rosbag folder
@@ -162,7 +222,8 @@ end
 saveas(f, replace(bagFilePath, '.db3', '_cmd_vel.png'))
 
 
-% save the .mat with est_param_time, es
+% save the .mat with est_param_time, est_param_data, ref_vel_time, ref_vel_data, act_vel_time, act_vel_data, delta_v, cmd_vel_data to the rosbag folder
+save(replace(bagFilePath, '.db3', '.mat'), 'est_param_time', 'est_param_data', 'ref_vel_time', 'ref_vel_data', 'act_vel_time', 'act_vel_data', 'delta_v', 'cmd_vel_data')
 
 
 end
