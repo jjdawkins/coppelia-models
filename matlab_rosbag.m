@@ -1,3 +1,5 @@
+close all;
+
 % get all rosbags in rosbag folder
 folders = dir('rosbags');
 desired_plots = 1;
@@ -31,7 +33,7 @@ topics = bag.AvailableTopics
 amperage_scale = 15;
 turn_scale = 0.35;
 
-% First plot the /rover/mocap/odom topic
+% First plot the /rover/mocap/odom topic POSITION %%%%%%%%%%%%%%
 topic = '/rover/mocap/odom';
 msgs = readMessages(select(bag, 'Topic', topic));
 
@@ -71,6 +73,54 @@ for i = 1:3
   grid on
   xlabel('Time (s)', 'Interpreter', 'latex', 'FontSize', 14)
 end
+
+% now plot the twist message
+
+twists = []; % this will be a 3xn
+for i = 1:length(msgs)
+  new_twist = [msgs{i}.twist.twist.linear.x, msgs{i}.twist.twist.linear.y, msgs{i}.twist.twist.angular.z];
+  twists = [twists, new_twist'];
+end
+
+lims = {[0.5, 1.5], [-0.3, 0.3], [0.5, 1.5]};
+
+f = figure
+f.Position = [68 145 950 1121];
+twist_titles = ["$\dot{x}$", "$\dot{y}$", "$\dot{z}$"];
+tiledlayout(3,1)
+sgtitle('NSAID Ground Vehicle Twist', 'Interpreter', 'latex', 'FontSize', 18)
+for i = 1:3
+  nexttile
+  plot(twists(i,:), "LineWidth", 2)
+  title(twist_titles(i), 'Interpreter', 'latex', 'FontSize', 14)
+  grid on
+  xlabel('Time (s)', 'Interpreter', 'latex', 'FontSize', 14)
+  ylim(lims{i})
+end
+
+
+% now plot the time delay between messages
+times = [];
+for i = 1:length(msgs)
+  this_t = double(msgs{i}.header.stamp.sec) + double(msgs{i}.header.stamp.nanosec) *1e-9
+  times = [times, this_t];
+end
+
+time_diffs = diff(times);
+
+time_diffs
+
+
+f = figure
+f.Position = [68 145 950 1121];
+tiledlayout(1,1)
+sgtitle('NSAID Ground Vehicle Time Delay', 'Interpreter', 'latex', 'FontSize', 18)
+nexttile
+plot(time_diffs, "LineWidth", 2)
+title('Time Delay', 'Interpreter', 'latex', 'FontSize', 14)
+grid on
+xlabel('Time (s)', 'Interpreter', 'latex', 'FontSize', 14)
+
 
 
 return
