@@ -24,8 +24,8 @@ def init_ref_signals(self):
     t = symbols("t")
     ref_v = Array(
         [
-            1.1, # + 0.05 * sin(0.71*t),  #Throttle
-            1.0, # + 0.1 * sin (0.43 *t ), # Steering
+            1.1 + 0.05 * sin(0.71*t),  #Throttle
+            1.1 + 0.1 * sin (0.43 *t ), # Steering
             0,
         ]
     )
