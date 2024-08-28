@@ -2,7 +2,7 @@ close all;
 
 % get all rosbags in rosbag folder
 folders = dir('rosbags');
-desired_plots = 1;
+desired_plots = 10;
 
 plot_count = 0;
 for i = 1:length(folders)
@@ -102,13 +102,11 @@ end
 % now plot the time delay between messages
 times = [];
 for i = 1:length(msgs)
-  this_t = double(msgs{i}.header.stamp.sec) + double(msgs{i}.header.stamp.nanosec) *1e-9
+  this_t = double(msgs{i}.header.stamp.sec) + double(msgs{i}.header.stamp.nanosec) *1e-9;
   times = [times, this_t];
 end
 
 time_diffs = diff(times);
-
-time_diffs
 
 
 f = figure
@@ -121,9 +119,6 @@ title('Time Delay', 'Interpreter', 'latex', 'FontSize', 14)
 grid on
 xlabel('Time (s)', 'Interpreter', 'latex', 'FontSize', 14)
 
-
-
-return
 
 
 
