@@ -70,6 +70,9 @@ def init_error_plot(self):
 
 
 def plot_vel(self):
+    # make sure that z_dot_hist and z_dot_d_hist exist
+    if not hasattr(self, "z_dot_hist") or not hasattr(self, "z_dot_d_hist"):
+        return
     # plot the velocity values
     self.vel_lines[0].set_data(self.t_z_dot_hist, self.z_dot_hist[0, :])
     self.vel_lines[1].set_data(self.t_z_dot_d_hist, self.z_dot_d_hist[0, :])

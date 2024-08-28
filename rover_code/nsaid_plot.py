@@ -103,7 +103,6 @@ class nsaidPlot(Node):
         pass
 
 
-
 def main(args=None):
     # Initialize the ROS 2 Python client library
     rclpy.init(args=args)
