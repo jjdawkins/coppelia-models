@@ -2,20 +2,14 @@ close all;
 
 % get all rosbags in rosbag folder
 folders = dir('rosbags');
-desired_plots = 10;
 
-plot_count = 0;
-for i = 1:length(folders)
-  if plot_count >= desired_plots
-    break
-  end
+for i = 1:5
   folder = folders(i);
   if folder.isdir && ~strcmp(folder.name, '.') && ~strcmp(folder.name, '..')
     bagFiles = dir(fullfile('rosbags', folder.name, '*.db3'));
     for j = 1:length(bagFiles)
       bagFilePath = fullfile('rosbags', folder.name, bagFiles(j).name)
       visualize_rosbag(bagFilePath);
-      plot_count = plot_count +1;
     end
   end
 end
