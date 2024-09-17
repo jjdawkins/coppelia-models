@@ -16,10 +16,22 @@ end
 mat_file_paths
 
 % adaptive then non-adaptive
-comparison_select = [8, 7];
-file_prefix = 'const_exp_comparison_';
+
+
+% SIN wave experiment
+comparison_select = [3, 4];
+file_prefix = 'sin_exp_comparison_';
 image_path = '/Users/allan/projects/matlab/lyapunov_sos_rover/latex/images/';
-save = 0;
+
+
+% %const experiment
+% comparison_select = [8, 7];
+% file_prefix = 'const_exp_comparison_';
+% image_path = '/Users/allan/projects/matlab/lyapunov_sos_rover/latex/images/';
+
+
+
+save = 1;
 
 
 data = {};
@@ -28,7 +40,7 @@ for i = 1:length(comparison_select)
     data{i} = load(mat_file_paths{comparison_select(i)});
 end
 
-data_label = ["Adaptive", "Non-Adaptive"];
+data_label = ["NS-AVTC", "VTC"];
 
 plot_colors = ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F"];
 
@@ -47,7 +59,7 @@ plot_options = {'LineWidth', 2};
 tiled_options = {'TileSpacing', 'compact', 'Padding', 'compact'};
 legend_options = {'fontsize', 15, 'Location', 'best'};
 
-image_options = {'-dpng', '-r400'};
+image_options = {'-dpdf', '-bestfit'};
 
 % plot act_velocities vs time for each dataset into a single plot
 f=figure;
@@ -75,7 +87,7 @@ end
 
 % save the plot
 if save(1)
-    print(f, fullfile(image_path, strcat(file_prefix, 'velocities.png')), image_options{:})
+    print(f, fullfile(image_path, strcat(file_prefix, 'velocities.pdf')), image_options{:})
 end
 
 hold off
@@ -108,7 +120,7 @@ end
 
 % save the plot
 if (save)
-    print(f, fullfile(image_path, strcat(file_prefix, 'delta_velocities.png')), image_options{:})
+    print(f, fullfile(image_path, strcat(file_prefix, 'delta_velocities.pdf')), image_options{:})
 end
 
 
@@ -128,6 +140,10 @@ for i=1:size(data{1}.est_param_data, 2)
 
     est_param_norm(:,i) = new_vector;
 end
+
+% print the final parameter values
+fprintf('Final Parameter Values\n')
+data{1}.est_param_data(:,end)
 
 % plot the parameters for the adaptive case! NORMALIZED
 f = figure;
@@ -150,8 +166,8 @@ for i = 1:m
     xlim([0, min(data{1}.est_param_time(end), data{2}.est_param_time(end))])
 end
 
-if (1)
-    print(f, fullfile(image_path, strcat(file_prefix, 'adaptive_params_norm.png')), image_options{:})
+if (save)
+    print(f, fullfile(image_path, strcat(file_prefix, 'adaptive_params_norm.pdf')), image_options{:})
 end
 
 % plot the parameters for the adaptive case - not normalized
@@ -176,5 +192,5 @@ for i = 1:m
 end
 
 if (save)
-    print(f, fullfile(image_path, strcat(file_prefix, 'adaptive_params.png')), image_options{:})
+    print(f, fullfile(image_path, strcat(file_prefix, 'adaptive_params.pdf')), image_options{:})
 end
