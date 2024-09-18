@@ -24,10 +24,10 @@ file_prefix = 'sin_exp_comparison_';
 image_path = '/Users/allan/projects/matlab/lyapunov_sos_rover/latex/images/';
 
 
-% %const experiment
-% comparison_select = [8, 7];
-% file_prefix = 'const_exp_comparison_';
-% image_path = '/Users/allan/projects/matlab/lyapunov_sos_rover/latex/images/';
+%const experiment
+comparison_select = [8, 7];
+file_prefix = 'const_exp_comparison_';
+image_path = '/Users/allan/projects/matlab/lyapunov_sos_rover/latex/images/';
 
 
 
@@ -59,7 +59,7 @@ plot_options = {'LineWidth', 2};
 tiled_options = {'TileSpacing', 'compact', 'Padding', 'compact'};
 legend_options = {'fontsize', 15, 'Location', 'best'};
 
-image_options = {'-dpdf', '-bestfit'};
+image_options = {'-dpdf', '-bestfit', '-r0 '};
 
 % plot act_velocities vs time for each dataset into a single plot
 f=figure;
@@ -89,8 +89,6 @@ end
 if save(1)
     print(f, fullfile(image_path, strcat(file_prefix, 'velocities.pdf')), image_options{:})
 end
-
-hold off
 
 
 delta_v_titles = ["$\Delta \dot{x}$", "$\Delta \dot{\psi}$"];
