@@ -66,7 +66,7 @@ f=figure;
 f.Position = [215 603 619 659];
 t=tiledlayout(2,1, tiled_options{:});
 for j = 1:2
-    nexttile
+    ax = nexttile
     for i = 1:2
         hold on
         % find out whent the
@@ -83,13 +83,19 @@ for j = 1:2
     ylim([0.5, 1.8])
     % cut it off at the shortest data length
     xlim([0, min(data{1}.act_vel_time(end), data{2}.act_vel_time(end))])
+
 end
 
 % save the plot
 if save(1)
     print(f, fullfile(image_path, strcat(file_prefix, 'velocities.pdf')), image_options{:})
+    % save using matlab2tikz
+    cleanfigure
+    matlab2tikz(fullfile(image_path, strcat(file_prefix, 'velocities.tex')), 'figurehandle', f, 'showInfo', false);
+
 end
 
+return
 
 delta_v_titles = ["$\Delta \dot{x}$", "$\Delta \dot{\psi}$"];
 
