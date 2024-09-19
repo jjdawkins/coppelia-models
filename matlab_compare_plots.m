@@ -24,10 +24,10 @@ file_prefix = 'sin_exp_comparison_';
 image_path = '/Users/allan/projects/matlab/lyapunov_sos_rover/latex/images/';
 
 
-%const experiment
-comparison_select = [8, 7];
-file_prefix = 'const_exp_comparison_';
-image_path = '/Users/allan/projects/matlab/lyapunov_sos_rover/latex/images/';
+% %const experiment
+% comparison_select = [8, 7];
+% file_prefix = 'const_exp_comparison_';
+% image_path = '/Users/allan/projects/matlab/lyapunov_sos_rover/latex/images/';
 
 
 
@@ -59,8 +59,6 @@ plot_options = {'LineWidth', 2};
 tiled_options = {'TileSpacing', 'compact', 'Padding', 'compact'};
 legend_options = {'fontsize', 15, 'Location', 'best'};
 
-image_options = {'-dpdf', '-bestfit', '-r0 '};
-
 % plot act_velocities vs time for each dataset into a single plot
 f=figure;
 f.Position = [215 603 619 659];
@@ -79,7 +77,9 @@ for j = 1:2
             plot(data{i}.ref_vel_time, data{i}.ref_vel_data(j,:), plot_options{:}, 'DisplayName', 'Reference', 'LineStyle', '--', 'Color', 'black')       
         end
     end
-    legend(legend_options{:})
+    if j ==1 
+        legend(legend_options{:})
+    end
     ylim([0.5, 1.8])
     % cut it off at the shortest data length
     xlim([0, min(data{1}.act_vel_time(end), data{2}.act_vel_time(end))])
@@ -88,14 +88,9 @@ end
 
 % save the plot
 if save(1)
-    print(f, fullfile(image_path, strcat(file_prefix, 'velocities.pdf')), image_options{:})
-    % save using matlab2tikz
-    cleanfigure
-    matlab2tikz(fullfile(image_path, strcat(file_prefix, 'velocities.tex')), 'figurehandle', f, 'showInfo', false);
-
+    saveFigure(f, image_path, file_prefix, 'velocities')
 end
 
-return
 
 delta_v_titles = ["$\Delta \dot{x}$", "$\Delta \dot{\psi}$"];
 
@@ -117,14 +112,16 @@ for j = 1:2
         end
     end
     ylim([-01.0, 1.0])
-    legend(legend_options{:})
     % cut it off at the shortest data length
     xlim([0, min(data{1}.act_vel_time(end), data{2}.act_vel_time(end))])
+    if j ==1 
+        legend(legend_options{:})
+    end
 end
 
 % save the plot
 if (save)
-    print(f, fullfile(image_path, strcat(file_prefix, 'delta_velocities.pdf')), image_options{:})
+    saveFigure(f, image_path, file_prefix, 'delta_velocities')
 end
 
 
@@ -171,7 +168,7 @@ for i = 1:m
 end
 
 if (save)
-    print(f, fullfile(image_path, strcat(file_prefix, 'adaptive_params_norm.pdf')), image_options{:})
+    saveFigure(f, image_path, file_prefix, 'adaptive_params_norm')
 end
 
 % plot the parameters for the adaptive case - not normalized
@@ -196,5 +193,15 @@ for i = 1:m
 end
 
 if (save)
-    print(f, fullfile(image_path, strcat(file_prefix, 'adaptive_params.pdf')), image_options{:})
+    saveFigure(f, image_path, file_prefix, 'adaptive_params')
+
+end
+
+
+function saveFigure(f, image_path, file_prefix, file_name)
+    f.PaperPositionMode = 'manual';
+    f.PaperUnits = 'points';
+    f.PaperSize = f.Position(3:4);
+    f.PaperPosition = [0 0 f.Position(3:4)];
+    print (f, fullfile(image_path, strcat(file_prefix, file_name, '.pdf')), '-dpdf', '-r0');
 end
