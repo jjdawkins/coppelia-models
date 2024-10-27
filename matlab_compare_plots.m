@@ -24,10 +24,10 @@ file_prefix = 'sin_exp_comparison_';
 image_path = '/Users/allan/projects/matlab/lyapunov_sos_rover/latex/images/';
 
 
-% %const experiment
-% comparison_select = [8, 7];
-% file_prefix = 'const_exp_comparison_';
-% image_path = '/Users/allan/projects/matlab/lyapunov_sos_rover/latex/images/';
+%const experiment
+comparison_select = [8, 7];
+file_prefix = 'const_exp_comparison_';
+image_path = '/Users/allan/projects/matlab/lyapunov_sos_rover/latex/images/';
 
 
 
@@ -46,12 +46,11 @@ plot_colors = ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE",
 
 param_names = {"$m$", "$J_z$", "$K_t$", "$C_{rr}$", "$C_{\alpha f}$", "$C_{\Sigma}$", "$C_{\Delta}$"};
 param_units = {"$kg$", "$kg \cdot m^2$", "$N/A$", "$N \cdot s/m$", "$N/rad$", "$N/rad$", "$N/rad$"};
-velocity_titles = ["$\dot{x}$", "$\dot{\psi}$", "$\dot{y}$"];
-delta_v_titles = ["$\Delta \dot{x}$", "$\Delta \dot{\psi}$"];
+velocity_titles = ["$\dot{x}$ vs Time", "$\dot{\psi}$ vs Time", "$\dot{y}$ vs Time"];
+delta_v_titles = ["$\Delta \dot{x}$ vs Time", "$\Delta \dot{\psi}$ vs Time"];
 time_label = "Time(s)";
 
-velocity_units = {'$m/s$', '$rad/s$', '$m/s$'};
-
+velocity_units = {'$\dot{x} \quad (m/s)$', '$\dot{\psi} \quad (rad/s)$', '$\dot{y} \quad (m/s)$'};
 
 title_options = {'Interpreter', 'latex', 'FontSize', 22};
 label_options = {'Interpreter', 'latex', 'FontSize', 20};
@@ -91,8 +90,6 @@ if save(1)
     saveFigure(f, image_path, file_prefix, 'velocities')
 end
 
-
-delta_v_titles = ["$\Delta \dot{x}$", "$\Delta \dot{\psi}$"];
 
 % plot delta velocities
 f = figure;
