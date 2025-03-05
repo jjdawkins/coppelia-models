@@ -19,15 +19,17 @@ mat_file_paths
 
 
 % SIN wave experiment
-comparison_select = [3, 4];
+comparison_select = [3, 4, 11];
 file_prefix = 'sin_exp_comparison_';
 image_path = '/Users/allan/projects/matlab/lyapunov_sos_rover/latex/images/';
 
 
+image_path = '';
+
 %const experiment
-comparison_select = [8, 7];
-file_prefix = 'const_exp_comparison_';
-image_path = '/Users/allan/projects/matlab/lyapunov_sos_rover/latex/images/';
+% comparison_select = [8, 7];
+% file_prefix = 'const_exp_comparison_';
+% image_path = '/Users/allan/projects/matlab/lyapunov_sos_rover/latex/images/';
 
 
 
@@ -40,7 +42,7 @@ for i = 1:length(comparison_select)
     data{i} = load(mat_file_paths{comparison_select(i)});
 end
 
-data_label = ["NS-AVTC", "VTC"];
+data_label = ["AVTC", "VTC"];
 
 plot_colors = ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F"];
 
