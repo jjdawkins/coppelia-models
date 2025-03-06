@@ -3,7 +3,7 @@ close all;
 % get all rosbags in rosbag folder
 folders = dir('rosbags');
 
-for i = 1:5
+for i = length(folders):length(folders)
   folder = folders(i);
   if folder.isdir && ~strcmp(folder.name, '.') && ~strcmp(folder.name, '..')
     bagFiles = dir(fullfile('rosbags', folder.name, '*.db3'));
@@ -30,7 +30,6 @@ turn_scale = 0.35;
 % First plot the /rover/mocap/odom topic POSITION %%%%%%%%%%%%%%
 topic = '/rover/mocap/odom';
 msgs = readMessages(select(bag, 'Topic', topic));
-
 msgs{1}.pose.pose.position
 
 positions = []; % this will be a 3xn

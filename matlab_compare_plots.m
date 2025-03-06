@@ -1,4 +1,4 @@
-close all; clear all; clc;
+close all; clearvars; clc;
 
 rosbag_folders = dir('rosbags');
 
@@ -19,19 +19,19 @@ mat_file_paths
 
 
 % SIN wave experiment
-comparison_select = [3, 4, 11];
+comparison_select = [23, 17, 21];
 file_prefix = 'sin_exp_comparison_';
 image_path = '/Users/allan/projects/matlab/lyapunov_sos_rover/latex/images/';
 
 
-image_path = '';
 
 %const experiment
-% comparison_select = [8, 7];
+% comparison_select = [8, 7, 13];
 % file_prefix = 'const_exp_comparison_';
 % image_path = '/Users/allan/projects/matlab/lyapunov_sos_rover/latex/images/';
 
 
+image_path = 'temp_images/';
 
 save = 1;
 
@@ -42,9 +42,9 @@ for i = 1:length(comparison_select)
     data{i} = load(mat_file_paths{comparison_select(i)});
 end
 
-data_label = ["AVTC", "VTC"];
+data_label = ["AVTC", "VTC", "VTC-I"];
 
-plot_colors = ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F"];
+plot_colors = ["#D95319", "#EDB120", "#0072BD", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F"];
 
 param_names = {"$m$", "$J_z$", "$K_t$", "$C_{rr}$", "$C_{\alpha f}$", "$C_{\Sigma}$", "$C_{\Delta}$"};
 param_units = {"$kg$", "$kg \cdot m^2$", "$N/A$", "$N \cdot s/m$", "$N/rad$", "$N/rad$", "$N/rad$"};
@@ -58,7 +58,7 @@ title_options = {'Interpreter', 'latex', 'FontSize', 22};
 label_options = {'Interpreter', 'latex', 'FontSize', 20};
 plot_options = {'LineWidth', 2};
 tiled_options = {'TileSpacing', 'compact', 'Padding', 'compact'};
-legend_options = {'fontsize', 15, 'Location', 'best'};
+legend_options = {'fontsize', 15, 'Location', 'northeast'};
 
 % plot act_velocities vs time for each dataset into a single plot
 f=figure;
@@ -66,11 +66,11 @@ f.Position = [215 603 619 659];
 t=tiledlayout(2,1, tiled_options{:});
 for j = 1:2
     ax = nexttile
-    for i = 1:2
+    for i = 1:3
         hold on
         % find out whent the
         plot(data{i}.act_vel_time, data{i}.act_vel_data(j,:), plot_options{:}, 'DisplayName', data_label(i))
-        if i == 2
+        if i == 3
             title(velocity_titles(j), title_options{:})
             grid on
             xlabel(time_label, label_options{:})
@@ -84,6 +84,10 @@ for j = 1:2
     ylim([0.5, 1.8])
     % cut it off at the shortest data length
     xlim([0, min(data{1}.act_vel_time(end), data{2}.act_vel_time(end))])
+    % bring AVTC to the front
+    uistack(findobj(gca, 'DisplayName', 'AVTC'), 'top')
+    % bring the reference line to the front
+    uistack(findobj(gca, 'DisplayName', 'Reference'), 'top')
 
 end
 
@@ -99,10 +103,10 @@ f.Position = [274 687 618 556];
 t = tiledlayout(2,1, tiled_options{:});
 for j = 1:2
     ax = nexttile;
-    for i = 1:2
+    for i = 1:3
         hold on
         plot(data{i}.ref_vel_time, data{i}.delta_v(j,:),'DisplayName', data_label(i), plot_options{:})
-        if i == 1
+        if i == 3
             title(delta_v_titles(j), title_options{:})
             grid on
             xlabel(time_label, label_options{:})
@@ -117,6 +121,10 @@ for j = 1:2
         legend(legend_options{:})
     end
 end
+    % bring AVTC to the front
+    uistack(findobj(gca, 'DisplayName', 'AVTC'), 'top')
+    % bring the reference line to the front
+    uistack(findobj(gca, 'DisplayName', 'Reference'), 'top')
 
 % save the plot
 if (save)
