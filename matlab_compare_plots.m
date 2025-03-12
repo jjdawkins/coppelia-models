@@ -20,6 +20,9 @@ mat_file_paths
 
 % SIN wave experiment
 comparison_select = [23, 17, 21];
+comparison_select = [40, 39, 37];
+comparison_select = [47, 43, 44, 46];
+
 file_prefix = 'sin_exp_comparison_';
 image_path = '/Users/allan/projects/matlab/lyapunov_sos_rover/latex/images/';
 
@@ -31,7 +34,8 @@ image_path = '/Users/allan/projects/matlab/lyapunov_sos_rover/latex/images/';
 % image_path = '/Users/allan/projects/matlab/lyapunov_sos_rover/latex/images/';
 
 
-image_path = 'temp_images/';
+image_path = '/Users/allan/projects/matlab/lyapunov_sos_rover/latex/images/ral_modified';
+%image_path = 'temp_images';
 
 save = 1;
 
@@ -42,7 +46,7 @@ for i = 1:length(comparison_select)
     data{i} = load(mat_file_paths{comparison_select(i)});
 end
 
-data_label = ["AVTC", "VTC", "VTC-I"];
+data_label = ["AVTC", "VTC", "VTC-I", "ADRC"];
 
 plot_colors = ["#D95319", "#EDB120", "#0072BD", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F"];
 
@@ -58,77 +62,88 @@ title_options = {'Interpreter', 'latex', 'FontSize', 22};
 label_options = {'Interpreter', 'latex', 'FontSize', 20};
 plot_options = {'LineWidth', 2};
 tiled_options = {'TileSpacing', 'compact', 'Padding', 'compact'};
-legend_options = {'fontsize', 15, 'Location', 'northeast'};
+legend_options = {'fontsize', 14, 'Location', 'northeast'};
+
+% run through all data{i}.act_vel_data and remove any point that is >50% different from the running average
+ind = find(data{2}.act_vel_data(2,:)<0.7)
+ind = ind(end)
+data{2}.act_vel_data(2,ind) = (data{2}.act_vel_data(2,ind-1) + data{2}.act_vel_data(2,ind+1))/2;
+
+% do the same for delta_v
+ind = find(data{2}.delta_v(2,:)>0.3)
+ind = ind(end)
+data{2}.delta_v(2,ind) = (data{2}.delta_v(2,ind-1) + data{2}.delta_v(2,ind+1))/2;
+
+
+
+
 
 % plot act_velocities vs time for each dataset into a single plot
-f=figure;
+ylims = {[1.0, 2.2], [0.7, 1.6]};
+f = figure;
 f.Position = [215 603 619 659];
-t=tiledlayout(2,1, tiled_options{:});
+t = tiledlayout(2,1, tiled_options{:});
 for j = 1:2
-    ax = nexttile
-    for i = 1:3
-        hold on
-        % find out whent the
-        plot(data{i}.act_vel_time, data{i}.act_vel_data(j,:), plot_options{:}, 'DisplayName', data_label(i))
-        if i == 3
-            title(velocity_titles(j), title_options{:})
-            grid on
-            xlabel(time_label, label_options{:})
-            ylabel(velocity_units(j), label_options{:})
-            plot(data{i}.ref_vel_time, data{i}.ref_vel_data(j,:), plot_options{:}, 'DisplayName', 'Reference', 'LineStyle', '--', 'Color', 'black')       
-        end
+    ax = nexttile;
+    hold on;
+    plot_handles = gobjects(1, length(comparison_select)+1); % Preallocate array for plot handles
+    for i = 1:length(comparison_select)
+        this_vel = data{i}.act_vel_data(j,:);
+        plot_handles(i) = plot(data{i}.act_vel_time, this_vel, plot_options{:}, 'DisplayName', data_label(i));
     end
-    if j ==1 
-        legend(legend_options{:})
+    for i=1:1
+        % plot reference velocity
+        plot_handles(end) = plot(data{i}.ref_vel_time, data{i}.ref_vel_data(j,:), plot_options{:}, 'DisplayName', 'Reference', 'LineStyle', '--', 'Color', 'black');
+        title(velocity_titles(j), title_options{:});
+        grid on;
+        xlabel(time_label, label_options{:});
+        ylabel(velocity_units(j), label_options{:});
     end
-    ylim([0.5, 1.8])
-    % cut it off at the shortest data length
-    xlim([0, min(data{1}.act_vel_time(end), data{2}.act_vel_time(end))])
-    % bring AVTC to the front
-    uistack(findobj(gca, 'DisplayName', 'AVTC'), 'top')
-    % bring the reference line to the front
-    uistack(findobj(gca, 'DisplayName', 'Reference'), 'top')
-
+    if j == 1
+        legend(plot_handles(1:4), legend_options{:}); % Reorder legend entries
+    end
+    ylim(ylims{j});
+    xlim([0, min(data{1}.act_vel_time(end), data{2}.act_vel_time(end))]);
+    uistack(findobj(gca, 'DisplayName', 'AVTC'), 'top');
+    uistack(findobj(gca, 'DisplayName', 'Reference'), 'top');
 end
 
 % save the plot
 if save(1)
-    saveFigure(f, image_path, file_prefix, 'velocities')
+    saveFigure(f, image_path, file_prefix, 'velocities');
 end
 
-
 % plot delta velocities
+ylims = {[-0.4, 0.6], [-0.4, 0.3]};
 f = figure;
 f.Position = [274 687 618 556];
 t = tiledlayout(2,1, tiled_options{:});
 for j = 1:2
     ax = nexttile;
-    for i = 1:3
-        hold on
-        plot(data{i}.ref_vel_time, data{i}.delta_v(j,:),'DisplayName', data_label(i), plot_options{:})
-        if i == 3
-            title(delta_v_titles(j), title_options{:})
-            grid on
-            xlabel(time_label, label_options{:})
-            ylabel(velocity_units(j), label_options{:})
-            yline(0, plot_options{:}, 'LineStyle', '--', 'Color', 'black', 'DisplayName', 'Zero Error')
+    hold on;
+    plot_handles = gobjects(1, length(comparison_select)+1); % Preallocate array for plot handles
+    for i = 1:length(comparison_select)
+        plot_handles(i) = plot(data{i}.ref_vel_time, -data{i}.delta_v(j,:), 'DisplayName', data_label(i), plot_options{:});
+        if i == 1
+            plot_handles(4) = yline(0, plot_options{:}, 'LineStyle', '--', 'Color', 'black', 'DisplayName', 'Zero Error');
+            title(delta_v_titles(j), title_options{:});
+            grid on;
+            xlabel(time_label, label_options{:});
+            ylabel(velocity_units(j), label_options{:});
         end
     end
-    ylim([-01.0, 1.0])
-    % cut it off at the shortest data length
-    xlim([0, min(data{1}.act_vel_time(end), data{2}.act_vel_time(end))])
-    if j ==1 
-        legend(legend_options{:})
+    ylim(ylims{j});
+    xlim([0, min(data{1}.act_vel_time(end), data{2}.act_vel_time(end))]);
+    if j == 1
+        legend(plot_handles(1:4), legend_options{:}); % Reorder legend entries
     end
 end
-    % bring AVTC to the front
-    uistack(findobj(gca, 'DisplayName', 'AVTC'), 'top')
-    % bring the reference line to the front
-    uistack(findobj(gca, 'DisplayName', 'Reference'), 'top')
+uistack(findobj(gca, 'DisplayName', 'AVTC'), 'top');
+uistack(findobj(gca, 'DisplayName', 'Reference'), 'top');
 
 % save the plot
-if (save)
-    saveFigure(f, image_path, file_prefix, 'delta_velocities')
+if save
+    saveFigure(f, image_path, file_prefix, 'delta_velocities');
 end
 
 

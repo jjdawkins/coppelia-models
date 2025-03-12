@@ -1,4 +1,4 @@
-close all;
+close all; clearvars;
 
 % get all rosbags in rosbag folder
 folders = dir('rosbags');
@@ -75,7 +75,7 @@ for i = 1:length(msgs)
   twists = [twists, new_twist'];
 end
 
-lims = {[0.5, 1.5], [-0.3, 0.3], [0.5, 1.5]};
+lims = {[1.0, 2.0], [-0.3, 0.3], [1.0, 2.0]};
 
 f = figure
 f.Position = [68 145 950 1121];
