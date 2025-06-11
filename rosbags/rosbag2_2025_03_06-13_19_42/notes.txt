@@ -1,9 +1,0 @@
-VTC
-
-  ref_v = Array(
-        [
-            1.05,# + 0.05 * sin(0.71*t),  #Throttle
-            1.1 + 0.1 * sin (0.43 *t ), # Steering
-            0,
-        ]
-    )
