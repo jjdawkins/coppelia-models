@@ -8,7 +8,9 @@ from std_srvs.srv import Trigger
 from std_msgs.msg import Float64
 from geometry_msgs.msg import Twist
 from rosgraph_msgs.msg import Clock
+from sensor_msgs.msg import Imu
 import numpy as np
+import json
 
 class SurferSim(Node):
     def __init__(self):
@@ -30,6 +32,8 @@ class SurferSim(Node):
             10
         )
 
+        self.imu_pub = self.create_publisher(Imu, f'/{self.name}/imu', 10)
+
         self.gamma = np.array([
                             [ 0.0,  -1.0,  -1.56],
                             [-1.0,   0.0,  -1.56],
@@ -39,12 +43,14 @@ class SurferSim(Node):
 
         self.sim_time_pub = self.create_publisher(Clock, '/clock', 10)
 
-
-        self.create_timer(0.05, self.loop_callback)
+        self.get_handles()
+        self.create_timer(0.01, self.loop_callback)
         self.get_logger().info('Surfer Simulation Node has been initialized.')
 
     def get_handles(self):
-        self.surfer_h = self.sim.getObjectHandle(self.name)
+        self.surfer_h = self.sim.getObjectHandle(f"/{self.name}")
+        self.imu_h = self.sim.getObjectHandle(':/imu')
+        # self.oak_h = self.sim.getObjectHandle(':/oak_d')
 
     def cmd_vel_callback(self, msg):
         # Convert Twist message to CoppeliaSim command
@@ -75,11 +81,36 @@ class SurferSim(Node):
             self.sim.setFloatSignal(f'thruster_3_pwm', motor_pwm[2])
             self.sim.setFloatSignal(f'thruster_4_pwm', motor_pwm[3])
 
+            # try:
+            imu_bin = self.sim.getBufferProperty(self.imu_h,"customData.imu")
+            imu_data = self.sim.unpackTable(imu_bin)[0]
+            self.publish_imu_data(imu_data)
+
+
             self.sim.step()
 
+    def publish_imu_data(self, imu_data):
+        
+        imu_obj = json.loads(imu_data)
+        imu_msg = Imu()
+        imu_msg.header.stamp = self.get_clock().now().to_msg()
+        imu_msg.header.frame_id = 'imu_frame'
 
+        imu_msg.orientation.x = imu_obj['orientation']['x']
+        imu_msg.orientation.y = imu_obj['orientation']['y']
+        imu_msg.orientation.z = imu_obj['orientation']['z']
+        imu_msg.orientation.w = imu_obj['orientation']['w']
+        imu_msg.angular_velocity.x = imu_obj['angular_velocity']['x']
+        imu_msg.angular_velocity.y = imu_obj['angular_velocity']['y']
+        imu_msg.angular_velocity.z = imu_obj['angular_velocity']['z']
+        imu_msg.linear_acceleration.x = imu_obj['linear_acceleration']['x']
+        imu_msg.linear_acceleration.y = imu_obj['linear_acceleration']['y']
+        imu_msg.linear_acceleration.z = imu_obj['linear_acceleration']['z']
+
+        self.imu_pub.publish(imu_msg)
 
     def start_simulation_callback(self, request, response):
+
         
         if self.sim_status == 'stopped':
             # Add code to start CoppeliaSim simulation here
